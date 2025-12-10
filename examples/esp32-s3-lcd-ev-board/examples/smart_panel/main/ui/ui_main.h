@@ -37,7 +37,6 @@ typedef enum {
 typedef enum {
     status_bar_item_wifi = 0,
     status_bar_item_battery,
-    status_bar_item_bluetooth,
     status_bar_item_little_time,
     status_bar_item_max,
 } status_bar_item_t;
@@ -102,7 +101,6 @@ _UI_FUNC_DEF_(air_conditioner);
 _UI_FUNC_DEF_(pomodoro_timer);
 _UI_FUNC_DEF_(habit_tracker);
 _UI_FUNC_DEF_(app);
-_UI_FUNC_DEF_(bluetooth);
 _UI_FUNC_DEF_(clock);
 _UI_FUNC_DEF_(humidity);
 _UI_FUNC_DEF_(led);
