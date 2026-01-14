@@ -51,8 +51,12 @@ typedef enum {
 } timer_mode_t;
 static timer_mode_t current_mode = MODE_FOCUS; //current timer mode
 static int remaining_time = 0; // 1 min default
+
+// need to store in cloud/database - completed_pomodoros should persist across sessions
 static int completed_pomodoros = 0; //Track completed focus sessions
+// need to store in cloud/database - current_session and session history for analytics
 static int current_session = 0; //Track current session number (0 = not started)
+
 static esp_timer_handle_t pomodoro_timer = NULL;
 static lv_task_t *ui_update_task = NULL; // LVGL task for UI updates
 //custom time
@@ -82,6 +86,7 @@ static FILE *current_music_fp = NULL;
 static bool music_is_playing = false;  // actively playing
 static bool music_is_paused = false;   // paused (can resume)
 static char currently_playing_path[128] = "";  // track which file is currently playing
+// need to store in cloud/database - music selection preferences for each mode
 static char focus_music_file_path[128] = "";       // store full path
 static char short_break_music_file_path[128] = "";
 static char long_break_music_file_path[128] = "";
@@ -481,6 +486,7 @@ static void _btn_start_cb(lv_obj_t *obj, lv_event_t event){
         if (timer_running){
             // increment sess counter when starting focus mode for the first time
             if (current_mode == MODE_FOCUS && current_session == 0) {
+                // need to store in cloud/database - log session start timestamp and mode
                 current_session = 1;
                 _update_session_tracker();
             }
@@ -537,6 +543,7 @@ static void _btn_skip_cb(lv_obj_t *obj, lv_event_t event)
         if (current_mode == MODE_FOCUS)
         {
             completed_pomodoros++;
+            // need to store in cloud/database - log session skipped with timestamp
             current_session++; // +1 session on skip
             _update_session_tracker();
 
@@ -695,6 +702,7 @@ static void _pomodoro_tick(void *arg)
         {
             completed_pomodoros++;
             current_session++;
+            // need to store in cloud/database - log completed focus session with end timestamp and duration
             
             // after # focus sessions, take long break
             if (completed_pomodoros >= focus_sessions_before_long_break)
@@ -712,6 +720,7 @@ static void _pomodoro_tick(void *arg)
         {
             // after any break, go back to focus
             current_mode = MODE_FOCUS;
+            // need to store in cloud/database - log completed break session with timestamps
             auto_start = true;
         }
         
@@ -1454,7 +1463,7 @@ static void _settings_confirm_cb(lv_obj_t *obj, lv_event_t event)
         custom_long_break_time = long_min * 60 + long_sec;
         if (custom_long_break_time < 1) custom_long_break_time = 1;
         
-        // save music selections - store full file paths
+        // need to store in cloud/database - save music selections for all modes
         uint16_t focus_dropdown_sel = lv_dropdown_get_selected(_dropdown_focus_music);
         if (focus_dropdown_sel >= music_file_count) {
             focus_music_file_path[0] = '\0';  // "None" selected
@@ -1684,4 +1693,3 @@ static void _play_music_for_mode(timer_mode_t mode)
     
     ESP_LOGI("POMODORO", "<<< _play_music_for_mode END (new music playing)");
 }
-

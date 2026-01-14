@@ -1,4 +1,3 @@
-
 #include "ui_habit_tracker_manage_habits.h"
 #include "ui_main.h"
 #include "ui_keyboard.h"
@@ -6,15 +5,16 @@
 #include <string.h>
 #include <stdio.h>
 #include <time.h>
+#include <stdint.h>
 
-// habit storage (dynamic)
+// habit storage
 #define INITIAL_HABITS_CAPACITY 10
 static habit_t *habits = NULL;
 static uint16_t habit_count = 0;
 static uint16_t habits_capacity = 0;
 static int16_t selected_habit_idx = -1; // -1: new habit
 
-/* LVGL objects */
+// lvgl objects
 static lv_obj_t *list_container = NULL;
 static lv_obj_t *habit_list = NULL;
 static lv_obj_t *edit_panel = NULL;
@@ -59,9 +59,10 @@ static uint16_t selected_custom_dates_count = 0;
 static void habit_list_event_cb(lv_obj_t *obj, lv_event_t event)
 {
     if (event == LV_EVENT_CLICKED) {
-        uint16_t idx = lv_list_get_btn_index(habit_list, obj);
-        if (idx < habit_count) {
-            show_edit_panel(idx);
+        // get the actual habit index stored in the button's user data
+        uint16_t habit_idx = (uint16_t)(uintptr_t)lv_obj_get_user_data(obj);
+        if (habit_idx < habit_count) {
+            show_edit_panel(habit_idx);
         }
     }
 }
@@ -104,6 +105,7 @@ static void save_btn_event_cb(lv_obj_t *obj, lv_event_t event)
 static void give_up_btn_event_cb(lv_obj_t *obj, lv_event_t event)
 {
     if (event == LV_EVENT_CLICKED) {
+        // need to update in cloud/database - mark habit as inactive/deleted
         if (selected_habit_idx >= 0 && selected_habit_idx < habit_count) {
             habits[selected_habit_idx].is_active = 0;
         }
@@ -458,11 +460,12 @@ static bool ensure_habits_capacity(void)
 
 void ui_manage_habits_add_predefined(void)
 {
+    // need to get data from cloud/database - load user's saved habits instead of predefined defaults
     habit_t predefined[] = {
-        {"Drink Water", "Stay hydrated throughout the day", 0, {1,1,1,1,1,1,1}, 7, 2, 9, 0, 1, 1, {{0}}, 0, 0, 0},
-        {"Exercise", "Get moving and stay fit", 0, {1,0,1,0,1,0,0}, 3, 2, 7, 0, 1, 1, {{0}}, 0, 0, 0},
-        {"Read Book", "Read for personal growth", 0, {1,1,1,1,1,0,0}, 5, 4, 20, 0, 1, 1, {{0}}, 0, 0, 0},
-        {"Meditate", "Practice mindfulness daily", 0, {1,1,1,1,1,1,1}, 7, 2, 6, 0, 1, 1, {{0}}, 0, 0, 0},
+        {"Drink Water", "Stay hydrated throughout the day", 0, {1,1,1,1,1,1,1}, 7, 2, 9, 0, 1, 1, {{0}}, 0, 0, 0, 0},
+        {"Exercise", "Get moving and stay fit", 0, {1,0,1,0,1,0,0}, 3, 2, 7, 0, 1, 1, {{0}}, 0, 0, 0, 0},
+        {"Read Book", "Read for personal growth", 0, {1,1,1,1,1,0,0}, 5, 4, 20, 0, 1, 1, {{0}}, 0, 0, 0, 0},
+        {"Meditate", "Practice mindfulness daily", 0, {1,1,1,1,1,1,1}, 7, 2, 6, 0, 1, 1, {{0}}, 0, 0, 0, 0},
     };
     
     int count = sizeof(predefined) / sizeof(predefined[0]);
@@ -472,6 +475,9 @@ void ui_manage_habits_add_predefined(void)
             //  streak count = 0 for new habits
             habits[habit_count].streak_count = 0;
             habits[habit_count].last_completed_date = 0;
+            habits[habit_count].skip_days_used = 0;
+            habits[habit_count].skip_days_reset_date = 0;
+            habits[habit_count].is_flexible = 1; // flexible streaks
             habit_count++;
         }
     }
@@ -485,6 +491,8 @@ static void refresh_habit_list(void)
         if (habits[i].is_active) {
             lv_obj_t *btn = lv_list_add_btn(habit_list, LV_SYMBOL_EDIT, habits[i].name);
             lv_obj_set_event_cb(btn, habit_list_event_cb);
+            // store actual habit index in button's user data for callback mapping
+            lv_obj_set_user_data(btn, (void *)(uintptr_t)i);
         }
     }
 }
@@ -519,7 +527,7 @@ static void show_edit_panel(int16_t habit_idx)
         lv_roller_set_selected(roller_hour, h->hour, LV_ANIM_OFF);
         lv_roller_set_selected(roller_minute, h->minute / 15, LV_ANIM_OFF);
         
-        // give up button only for existing habits
+        // give up button
         lv_obj_set_hidden(btn_give_up, false);
     } else {
         // new habit
@@ -558,6 +566,7 @@ static void hide_edit_panel(void)
 
 static void save_current_habit(void)
 {
+    // need to store in cloud/database -  habit data
     habit_t *h;
     bool is_new_habit = false;
     
@@ -610,6 +619,9 @@ static void save_current_habit(void)
     if (is_new_habit) {
         h->streak_count = 0;
         h->last_completed_date = 0;
+        h->skip_days_used = 0;
+        h->skip_days_reset_date = 0;
+        h->is_flexible = 1; // enable flexible streaks by default
     }
 }
 
@@ -628,6 +640,7 @@ habit_t* ui_manage_habits_get_habit(uint16_t index)
 
 void ui_manage_habits_mark_completed(uint16_t index, bool completed)
 {
+    // need to store in cloud/database - log habit completion with timestamp and persist updated streak count
     if (index < habit_count) {
         habit_t *h = &habits[index];
         time_t now = time(NULL);
@@ -635,19 +648,53 @@ void ui_manage_habits_mark_completed(uint16_t index, bool completed)
         if (completed) {
             // check for consecutive completion
             time_t last_completion = (time_t)h->last_completed_date;
-            
-            // calc days difference
             int days_diff = (now - last_completion) / (24 * 60 * 60);
             
-            // if completed within expected frequency, increment streak
-            if (days_diff <= 7) { // weekly habits
+            // allow max 2 missed days per 14 day period
+            time_t skip_reset = (time_t)h->skip_days_reset_date;
+            int days_since_reset = (now - skip_reset) / (24 * 60 * 60);
+            
+            if (days_since_reset >= 14) {
+                // 14 days passed, reset miss counter streak continues
+                h->skip_days_used = 0;
+                h->skip_days_reset_date = (uint32_t)now;
+            }
+            
+            // calc actual days missed 
+            int days_missed = (days_diff > 1) ? days_diff - 1 : 0;
+            
+            // check if total missed days in period exceeds 2
+            if (h->skip_days_used + days_missed <= 2) {
+                // within 2, keep streak alive
+                h->skip_days_used += days_missed;
                 h->streak_count++;
             } else {
-                // reset streak if too long since last completion
+                // exceeded 2, reset streak
                 h->streak_count = 1;
+                // reset 14-day period when streak resets to 1
+                h->skip_days_used = 0;
+                h->skip_days_reset_date = (uint32_t)now;
             }
             
             h->last_completed_date = (uint32_t)now;
         }
     }
+}
+
+// remaining skip days for flexible streak display (used by today_view and statistics)
+uint8_t ui_manage_habits_get_remaining_skips(const habit_t *habit)
+{
+    if (!habit) return 0;
+    
+    time_t now = time(NULL);
+    time_t skip_reset = (time_t)habit->skip_days_reset_date;
+    int days_since_reset = (now - skip_reset) / (24 * 60 * 60);
+    
+    // if 14 days have passed, reset to 2 skips available
+    if (days_since_reset >= 14) {
+        return 2;
+    }
+    
+    // otherwise return remaining skips
+    return (2 - habit->skip_days_used);
 }

@@ -16,6 +16,7 @@
 #include "esp_sleep.h"
 #include "nvs_flash.h"
 #include "esp_sntp.h"
+#include "app_geolocation.h"
 
 static const char *TAG = "sntp";
 
@@ -52,8 +53,8 @@ void app_sntp_init(void)
     struct tm timeinfo;
     time(&now);
     localtime_r(&now, &timeinfo);
-    // Set timezone to China Standard Time
-    setenv("TZ", "CST-8", 1);
+    // Set timezone to Singapore Standard Time (UTC+8)
+    setenv("TZ", "SGT-8", 1);
     tzset();
     // Is time set? If not, tm_year will be (1970 - 1900).
     if (timeinfo.tm_year < (2016 - 1900)) {
@@ -86,7 +87,14 @@ void app_sntp_init(void)
     char strftime_buf[64];
     localtime_r(&now, &timeinfo);
     strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
-    ESP_LOGI(TAG, "The current date/time in Shanghai is: %s", strftime_buf);
+    
+    // Try to fetch geolocation
+    geolocation_t geo = {0};
+    if (app_geolocation_fetch(&geo)) {
+        ESP_LOGI(TAG, "The current date/time in %s, %s is: %s", geo.city, geo.country, strftime_buf);
+    } else {
+        ESP_LOGI(TAG, "The current date/time in Singapore is: %s", strftime_buf);
+    }
 
     if (sntp_get_sync_mode() == SNTP_SYNC_MODE_SMOOTH) {
         struct timeval outdelta;
@@ -123,9 +131,7 @@ static void initialize_sntp(void)
 {
     ESP_LOGI(TAG, "Initializing SNTP");
     esp_sntp_setoperatingmode(SNTP_OPMODE_POLL);
-    esp_sntp_setservername(0, "ntp.aliyun.com");
-    esp_sntp_setservername(1, "time.asia.apple.com");
-    esp_sntp_setservername(2, "pool.ntp.org");
+    esp_sntp_setservername(0, "pool.ntp.org");
     esp_sntp_set_time_sync_notification_cb(time_sync_notification_cb);
 #ifdef CONFIG_SNTP_TIME_SYNC_METHOD_SMOOTH
     esp_sntp_set_sync_mode(SNTP_SYNC_MODE_SMOOTH);

@@ -32,6 +32,7 @@ static lv_obj_t *_chart_title = NULL;
 static lv_chart_series_t *_focus_time_series = NULL;
 
 // sample data
+// need to get data from cloud/database - fetch weekly focus time statistics 
 static uint16_t focus_time_data[] = { 25, 50, 75, 100, 50, 75, 180 }; // min/day
 
 /* Forward declarations */
@@ -44,13 +45,20 @@ void ui_pomodoro_analytics_init(void *data)
     ui_page_show("Pomodoro Analytics");
     obj_page_pomodoro_analytics = ui_page_get_obj();
 
-    // back button (top left)
+    // back button (top left) - consistent with ui_page style
     _btn_back = lv_btn_create(obj_page_pomodoro_analytics, NULL);
     lv_obj_set_size(_btn_back, 50, 50);
-    lv_obj_align(_btn_back, NULL, LV_ALIGN_IN_TOP_LEFT, 10, 10);
-    lv_obj_set_style_local_radius(_btn_back, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_RADIUS_CIRCLE);
+    lv_obj_align(_btn_back, NULL, LV_ALIGN_IN_TOP_LEFT, 10, 5);
+    lv_obj_set_style_local_bg_color(_btn_back, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
+    lv_obj_set_style_local_bg_color(_btn_back, LV_BTN_PART_MAIN, LV_STATE_PRESSED, LV_COLOR_WHITE);
+    lv_obj_set_style_local_value_color(_btn_back, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, COLOR_THEME);
+    lv_obj_set_style_local_value_color(_btn_back, LV_BTN_PART_MAIN, LV_STATE_PRESSED, COLOR_THEME);
+    lv_obj_set_style_local_outline_color(_btn_back, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
+    lv_obj_set_style_local_outline_color(_btn_back, LV_BTN_PART_MAIN, LV_STATE_PRESSED, LV_COLOR_WHITE);
+    lv_obj_set_style_local_border_color(_btn_back, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
+    lv_obj_set_style_local_border_color(_btn_back, LV_BTN_PART_MAIN, LV_STATE_PRESSED, LV_COLOR_WHITE);
     lv_obj_set_style_local_value_str(_btn_back, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_SYMBOL_LEFT);
-    lv_obj_set_style_local_bg_color(_btn_back, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(220, 220, 220));
+    lv_obj_set_style_local_value_font(_btn_back, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, &lv_font_montserrat_40);
     lv_obj_set_event_cb(_btn_back, _btn_back_cb);
 
     // left (stats)

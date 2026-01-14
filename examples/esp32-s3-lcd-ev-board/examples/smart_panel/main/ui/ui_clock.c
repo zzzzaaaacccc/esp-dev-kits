@@ -6,9 +6,11 @@
 
 #include <time.h>
 #include <sys/time.h>
+#include <string.h>
 
 #include "ui_main.h"
 #include "app_weather.h"
+#include "app_geolocation.h"
 
 /* UI function declaration */
 ui_func_desc_t ui_clock_func = {
@@ -196,7 +198,18 @@ void ui_clock_init(void *data)
     lv_label_set_recolor(label_location, true);
     lv_obj_set_style_local_text_font(label_location, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &font_en_28);
     lv_obj_set_style_local_text_color(label_location, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, lv_theme_get_color_primary());
-    lv_label_set_text(label_location, "Shanghai, China" "#f6ae3d " LV_SYMBOL_EXTRA_MAP_MARKER_ALT "#");
+    
+    // Try to fetch geolocation
+    geolocation_t location = {0};
+    char location_text[128] = {0};
+    if (app_geolocation_fetch(&location) && location.region[0] != '\0') {
+        snprintf(location_text, sizeof(location_text), "%s#f6ae3d " LV_SYMBOL_EXTRA_MAP_MARKER_ALT "#",
+                 location.region);
+    } else {
+        // Fallback to default location
+        snprintf(location_text, sizeof(location_text), "Singapore#f6ae3d " LV_SYMBOL_EXTRA_MAP_MARKER_ALT "#");
+    }
+    lv_label_set_text(label_location, location_text);
     lv_obj_align(label_location, label_date, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 5);
 
     /* Set time zone and create a task to update time */

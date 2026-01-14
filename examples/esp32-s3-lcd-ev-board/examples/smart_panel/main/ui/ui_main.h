@@ -99,6 +99,7 @@ _UI_FUNC_DEF_(about);
 _UI_FUNC_DEF_(air);
 _UI_FUNC_DEF_(air_conditioner);
 _UI_FUNC_DEF_(pomodoro_timer);
+_UI_FUNC_DEF_(pomodoro_analytics);
 _UI_FUNC_DEF_(habit_tracker);
 _UI_FUNC_DEF_(app);
 _UI_FUNC_DEF_(clock);
@@ -111,7 +112,6 @@ _UI_FUNC_DEF_(uv);
 _UI_FUNC_DEF_(weather);
 _UI_FUNC_DEF_(guide);
 _UI_FUNC_DEF_(sr);
-// _UI_FUNC_DEF_(ui_pomodoro_analytics_func);
 
 /**
  * @brief Init status bar. Objects to show time, qucik action buttons and Wi-Fi signal indicate.

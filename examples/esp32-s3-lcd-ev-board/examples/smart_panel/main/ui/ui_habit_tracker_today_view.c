@@ -34,11 +34,12 @@ void ui_today_view_init(void)
     lv_obj_t *obj_page = ui_page_get_obj();
     
     // initialize completion tracking
+    // need to get data from cloud/database - load today's habit completion status
     max_habits = 10;
     habit_completed = (bool *)malloc(max_habits * sizeof(bool));
     if (habit_completed) {
         for (uint16_t i = 0; i < max_habits; i++) {
-            habit_completed[i] = false;
+            habit_completed[i] = false;  // need to get data from cloud/database - fetch today's completions
         }
     }
     
@@ -126,15 +127,15 @@ static int compare_habits_by_time(const void *a, const void *b)
     const habit_item_t *habit_a = (const habit_item_t *)a;
     const habit_item_t *habit_b = (const habit_item_t *)b;
     
-    // Check completion status
+    // check completion status
     bool a_completed = (habit_a->index < max_habits) ? habit_completed[habit_a->index] : false;
     bool b_completed = (habit_b->index < max_habits) ? habit_completed[habit_b->index] : false;
     
-    // Completed habits always go to bottom
+    // completed habits go to bottom
     if (a_completed && !b_completed) return 1;
     if (!a_completed && b_completed) return -1;
     
-    // If both have same completion status, sort by time
+    // same completion status -> sort by time
     int time_a = get_habit_time_value(habit_a->habit);
     int time_b = get_habit_time_value(habit_b->habit);
     
@@ -165,7 +166,7 @@ static void checkbox_event_cb(lv_obj_t *obj, lv_event_t event)
         uint16_t habit_idx = (uint16_t)(uintptr_t)lv_obj_get_user_data(obj);
         bool checked = lv_checkbox_is_checked(obj);
         
-        // Ensure we have space to track this habit
+        // enough space to track habit
         if (habit_idx >= max_habits) {
             uint16_t new_max = habit_idx + 10;
             bool *new_completed = (bool *)realloc(habit_completed, new_max * sizeof(bool));
@@ -178,18 +179,19 @@ static void checkbox_event_cb(lv_obj_t *obj, lv_event_t event)
             }
         }
         
-        // Track completion state
+        // completion state
         if (habit_idx < max_habits) {
             habit_completed[habit_idx] = checked;
         }
         
-        // Mark habit as completed/uncompleted (updates last_completed_date and streak)
+        // mark habit as completed/uncompleted (updates last_completed_date and streak)
         ui_manage_habits_mark_completed(habit_idx, checked);
+        // need to store in cloud/database - sync habit completion status immediately after marking
         
-        // Refresh the entire list to move completed habits to bottom
+        // refresh entire list to move completed habits to bottom
         refresh_today_list();
         
-        // Refresh statistics view if it's visible
+        // refresh statistics view if it's visible
         ui_habit_tracker_statistics_refresh();
     }
 }
@@ -276,9 +278,18 @@ static void refresh_today_list(void)
             lv_obj_set_style_local_text_font(desc_label, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &font_en_18);
         }
         
-        // streak counter
-        char streak_str[30];
-        snprintf(streak_str, sizeof(streak_str), LV_SYMBOL_CHARGE " %d", habit->streak_count);
+        // streak counter with flexible streak support
+        char streak_str[50];
+        if (habit->is_flexible) {
+            // remaining skip days from manage_habits logic
+            uint8_t remaining_skips = ui_manage_habits_get_remaining_skips(habit);
+            
+            snprintf(streak_str, sizeof(streak_str), LV_SYMBOL_CHARGE " %d | Skips: %d", 
+                     habit->streak_count, remaining_skips);
+        } else {
+            snprintf(streak_str, sizeof(streak_str), LV_SYMBOL_CHARGE " %d", habit->streak_count);
+        }
+        
         lv_obj_t *streak_label = lv_label_create(btn, NULL);
         lv_label_set_text(streak_label, streak_str);
         lv_obj_align(streak_label, NULL, LV_ALIGN_IN_RIGHT_MID, -10, 0);

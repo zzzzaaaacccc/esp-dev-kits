@@ -13,7 +13,11 @@
 #include "esp_event.h"
 #include "esp_check.h"
 #include "esp_log.h"
+#include "esp_sntp.h"
 #include "nvs_flash.h"
+
+#include <time.h>
+#include <sys/time.h>
 
 #include "lwip/err.h"
 #include "lwip/sys.h"
@@ -21,6 +25,7 @@
 #include "app_wifi.h"
 #include "app_sntp.h"
 #include "app_weather.h"
+#include "app_geolocation.h"
 #include "settings.h"
 
 #define EXAMPLE_ESP_MAXIMUM_RETRY  10
@@ -47,6 +52,43 @@ scan_info_t scan_result = {
     .scan_done = WIFI_SCAN_IDLE,
     .ap_count = 0,
 };
+
+/* ============= NTP Time Synchronization Functions ============= */
+
+/**
+ * @brief Task for NTP time synchronization (non-blocking)
+ * Waits for SNTP (already initialized by app_sntp.c) to sync the time
+ */
+static void ntp_sync_task(void *pvParameter)
+{
+    ESP_LOGI(TAG, "NTP sync task started - waiting for SNTP to sync time");
+    
+    // Give SNTP a moment to start syncing
+    vTaskDelay(pdMS_TO_TICKS(1000));
+    
+    // Wait for time to be synchronized (with timeout)
+    uint32_t elapsed = 0;
+    uint32_t wait_step = 500;
+    uint32_t timeout_ms = 30000;  // 30 seconds max
+    
+    while (elapsed < timeout_ms) {
+        time_t current_time = time(NULL);
+        struct tm *tm_info = localtime(&current_time);
+        
+        // Time is synchronized when year is >= 2020
+        if (tm_info->tm_year >= 120) {
+            ESP_LOGI(TAG, "Time synchronized via SNTP: %s", asctime(tm_info));
+            vTaskDelete(NULL);
+            return;
+        }
+        
+        vTaskDelay(pdMS_TO_TICKS(wait_step));
+        elapsed += wait_step;
+    }
+    
+    ESP_LOGW(TAG, "NTP sync timeout after %u ms - time may be incorrect", timeout_ms);
+    vTaskDelete(NULL);
+}
 
 WiFi_Connect_Status wifi_connected_already(void)
 {
@@ -139,6 +181,13 @@ static void event_handler(void *arg, esp_event_base_t event_base,
         s_retry_num = 0;
         wifi_connected = true;
         xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
+        
+        // Spawn NTP sync task (non-blocking)
+        xTaskCreate(ntp_sync_task, "ntp_sync_task", 4096, NULL, tskIDLE_PRIORITY + 1, NULL);
+        
+        // Fetch geolocation when WiFi connects
+        geolocation_t temp_location = {0};
+        app_geolocation_fetch(&temp_location);
     }
 }
 

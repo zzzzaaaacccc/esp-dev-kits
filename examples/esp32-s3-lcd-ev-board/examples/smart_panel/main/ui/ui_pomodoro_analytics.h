@@ -1,8 +1,7 @@
-
-
-
 #ifndef UI_POMODORO_ANALYTICS_H
 #define UI_POMODORO_ANALYTICS_H
+
+#include "ui_main.h"
 
 #ifdef __cplusplus
 extern "C" {
