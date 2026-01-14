@@ -64,7 +64,7 @@ static int custom_focus_time = 15;      //predefined, 30s for testing
 static int custom_short_break_time = 2; // 10s for testing
 static int custom_long_break_time = 3; // 20s for testing
 static bool auto_start = false;
-static volatile bool timer_update_needed = false; // Flag for UI updates from ISR
+static volatile bool timer_update_needed = false; // flag for UI updates
 static volatile bool timer_completed = false; // Flag for mode transition
 
 // mode selection buttons
@@ -739,7 +739,7 @@ static void _update_timer_display(void)
     lv_label_set_text(_label_timer, buf);
 }
 
-// LVGL task callback, handles UI updates from timer ISR safely
+// LVGL task callback, handles UI updates from timer safely
 static void _ui_update_task_cb(lv_task_t *task)
 {
     if (timer_update_needed) {
