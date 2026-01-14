@@ -183,7 +183,7 @@ static char* _build_music_options(void)
         music_file_count++;
         ESP_LOGI("POMODORO", "found music: %s (idx=%zu)", filename, i);
         
-        // Extract just the filename without path
+        // extract just the filename without path
         char *name = strrchr(filename, '/');
         if (name) {
             name++;  // Skip the '/'
@@ -191,7 +191,7 @@ static char* _build_music_options(void)
             name = filename;
         }
         
-        // Remove file extension (.mp3, .wav, etc.)
+        // remove file extension (.mp3, .wav, etc.)
         strncpy(clean_name, name, sizeof(clean_name) - 1);
         clean_name[sizeof(clean_name) - 1] = '\0';
         
@@ -200,7 +200,7 @@ static char* _build_music_options(void)
             *ext = '\0';  // Remove extension
         }
         
-        // Add to options string with newline separator
+        // add to options string with newline separator
         if (!first) {
             strcat(options, "\n");
         }
@@ -208,7 +208,7 @@ static char* _build_music_options(void)
         first = false;
     }
     
-    // Add "None" option at the end
+    // add "None" option at the end
     if (!first) {
         strcat(options, "\n");
     }
@@ -739,7 +739,7 @@ static void _update_timer_display(void)
     lv_label_set_text(_label_timer, buf);
 }
 
-// LVGL task callback - handles UI updates from timer ISR safely
+// LVGL task callback, handles UI updates from timer ISR safely
 static void _ui_update_task_cb(lv_task_t *task)
 {
     if (timer_update_needed) {
