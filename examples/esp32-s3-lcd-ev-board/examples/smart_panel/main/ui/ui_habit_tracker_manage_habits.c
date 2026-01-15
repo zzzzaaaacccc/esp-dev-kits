@@ -105,8 +105,8 @@ static void save_btn_event_cb(lv_obj_t *obj, lv_event_t event)
 static void give_up_btn_event_cb(lv_obj_t *obj, lv_event_t event)
 {
     if (event == LV_EVENT_CLICKED) {
-        // need to update in cloud/database - mark habit as inactive/deleted
         if (selected_habit_idx >= 0 && selected_habit_idx < habit_count) {
+            // need to store in cloud/database -> mark habit as inactive/deleted and remove from user's habit list
             habits[selected_habit_idx].is_active = 0;
         }
         hide_edit_panel();
@@ -460,7 +460,7 @@ static bool ensure_habits_capacity(void)
 
 void ui_manage_habits_add_predefined(void)
 {
-    // need to get data from cloud/database - load user's saved habits instead of predefined defaults
+    // need to get data from cloud/database - load user's saved habits
     habit_t predefined[] = {
         {"Drink Water", "Stay hydrated throughout the day", 0, {1,1,1,1,1,1,1}, 7, 2, 9, 0, 1, 1, {{0}}, 0, 0, 0, 0},
         {"Exercise", "Get moving and stay fit", 0, {1,0,1,0,1,0,0}, 3, 2, 7, 0, 1, 1, {{0}}, 0, 0, 0, 0},
@@ -508,7 +508,7 @@ static void show_edit_panel(int16_t habit_idx)
         lv_dropdown_set_selected(dd_frequency, h->frequency_type);
         
         // custom dates if freq selected is Custom
-        if (h->frequency_type == 1) { // Custom
+        if (h->frequency_type == 1) { 
             selected_custom_dates_count = 0; // load from habit storage
         } else {
             selected_custom_dates_count = 0;
@@ -677,6 +677,12 @@ void ui_manage_habits_mark_completed(uint16_t index, bool completed)
             }
             
             h->last_completed_date = (uint32_t)now;
+        } else {
+            // unchecked - decrease streak and mark as not done
+            if (h->streak_count > 0) {
+                h->streak_count--;
+            }
+            h->last_completed_date = 0;
         }
     }
 }
@@ -687,6 +693,7 @@ uint8_t ui_manage_habits_get_remaining_skips(const habit_t *habit)
     if (!habit) return 0;
     
     time_t now = time(NULL);
+    // need to get from cloud/database -> skip days tracking (habit->skip_days_used, habit->skip_days_reset_date)
     time_t skip_reset = (time_t)habit->skip_days_reset_date;
     int days_since_reset = (now - skip_reset) / (24 * 60 * 60);
     
