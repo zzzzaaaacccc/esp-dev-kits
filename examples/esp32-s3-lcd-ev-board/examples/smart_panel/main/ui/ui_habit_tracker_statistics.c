@@ -31,7 +31,6 @@ static void get_monthly_completion_data(int *completion_rates, int *days_in_mont
 void ui_habit_tracker_statistics_init(void)
 {
     lv_obj_t *obj_page = ui_page_get_obj();
-    // need to get data from cloud/database - fetch historical habit completion data for all statistics
     
     stats_container = lv_obj_create(obj_page, NULL);
     lv_obj_set_size(stats_container, 520, 300);
@@ -254,7 +253,7 @@ static bool is_habit_scheduled_today(const habit_t *habit, int day_of_week)
     return false;
 }
 
-//overall stats - today's completion rate
+//overall stats, today's completion rate for overview tab
 static void calculate_statistics(uint16_t *completed, uint16_t *started, uint16_t *not_done, uint16_t *completion_rate)
 {
     *completed = 0;
@@ -267,7 +266,7 @@ static void calculate_statistics(uint16_t *completed, uint16_t *started, uint16_
     int current_hour = current_time->tm_hour;
     int current_minute = current_time->tm_min;
     
-    // get today's date (start of day at 00:00:00)
+    // get today's date (start of day at 12am)
     struct tm *timeinfo = localtime(&now);
     timeinfo->tm_hour = 0;
     timeinfo->tm_min = 0;
@@ -287,7 +286,7 @@ static void calculate_statistics(uint16_t *completed, uint16_t *started, uint16_
         if (habit && is_habit_scheduled_today(habit, current_day)) {
             total_today_habits++;
             
-            // check if completed today (last_completed_date is on or after today 00:00:00)
+            // need to get from cloud/database -> completion status (habit->last_completed_date)
             if (habit->last_completed_date > 0 && habit->last_completed_date >= today_start) {
                 (*completed)++;
             } 
@@ -300,23 +299,23 @@ static void calculate_statistics(uint16_t *completed, uint16_t *started, uint16_
                     case 0: // Anytime - never count as missed until end of day
                         time_has_passed = false;
                         break;
-                    case 1: // Specific time
+                    case 1: // specific time
                         if (current_hour > habit->hour || 
                             (current_hour == habit->hour && current_minute > habit->minute)) {
                             time_has_passed = true;
                         }
                         break;
-                    case 2: // Morning (8:00 am)
+                    case 2: // morning (8am)
                         if (current_hour > 8 || (current_hour == 8 && current_minute > 0)) {
                             time_has_passed = true;
                         }
                         break;
-                    case 3: // Afternoon (2:00 pm = 14:00)
+                    case 3: // afternoon (2pm)
                         if (current_hour > 14 || (current_hour == 14 && current_minute > 0)) {
                             time_has_passed = true;
                         }
                         break;
-                    case 4: // Night (8:00 pm = 20:00)
+                    case 4: // night (8pm)
                         if (current_hour > 20 || (current_hour == 20 && current_minute > 0)) {
                             time_has_passed = true;
                         }
@@ -327,10 +326,10 @@ static void calculate_statistics(uint16_t *completed, uint16_t *started, uint16_
                 }
                 
                 if (time_has_passed) {
-                    // Scheduled time passed but not completed
+                    // time passed but not completed
                     (*started)++;
                 } else {
-                    // Still have time to complete today
+                    // still have time to complete today
                     (*not_done)++;
                 }
             }
@@ -345,7 +344,7 @@ static void calculate_statistics(uint16_t *completed, uint16_t *started, uint16_
     }
 }
 
-// circular progress indicator
+// circular progress indicator for overview tab
 static void draw_circular_progress(lv_obj_t *parent, int16_t x, int16_t y, uint16_t percentage)
 {
     // cont for circle
@@ -392,13 +391,13 @@ static void draw_circular_progress(lv_obj_t *parent, int16_t x, int16_t y, uint1
     lv_label_set_align(label_text, LV_LABEL_ALIGN_CENTER);
 }
 
-// get monthly completion data 
+// get monthly completion data for trends tab
 static void get_monthly_completion_data(int *completion_rates, int *days_in_month)
 {
     time_t now = time(NULL);
     struct tm *tm_info = localtime(&now);
     
-    // Use displayed month/year if set, otherwise use current
+    // use displayed month/year if set, otherwise use current
     int month = (displayed_month == -1) ? tm_info->tm_mon : displayed_month;
     int year = (displayed_year == -1) ? (tm_info->tm_year + 1900) : displayed_year;
     
@@ -414,22 +413,21 @@ static void get_monthly_completion_data(int *completion_rates, int *days_in_mont
         completion_rates[i] = 0;
     }
     
-    // predefined stats -> need to update,  sample data for December 2025, days 1-5
+    // need to get from cloud/database -> real completion data (percentage of habits completed for that day)
     if (month == 11 && year == 2025) {
-        // predefined stats data for Dec 1-5, 2025 only
-        completion_rates[0] = 60;   // Dec 1
-        completion_rates[1] = 85;   // Dec 2
-        completion_rates[2] = 70;   // Dec 3
-        completion_rates[3] = 100;  // Dec 4
-        completion_rates[4] = 50;   // Dec 5
+        completion_rates[0] = 60;   // dec 1 2025
+        completion_rates[1] = 85;   // dec 2
+        completion_rates[2] = 70;   // dec 3
+        completion_rates[3] = 100;  // dec 4
+        completion_rates[4] = 50;   // dec 5
     }
 }
 
 
-// Draw arc-based progress indicator for moon phase completion rate
+// arc-based progress indicator for moon phase completion rate for trends tab
 static void draw_completion_indicator(lv_obj_t *parent, int16_t x, int16_t y, int completion_rate)
 {
-    // Background circle arc (light gray ring)
+    // background circle arc (light gray ring)
     lv_obj_t *arc_bg = lv_arc_create(parent, NULL);
     lv_obj_set_size(arc_bg, 56, 56);  // Much larger for better visibility
     lv_obj_align(arc_bg, NULL, LV_ALIGN_IN_TOP_LEFT, x, y);
@@ -438,22 +436,25 @@ static void draw_completion_indicator(lv_obj_t *parent, int16_t x, int16_t y, in
     lv_obj_set_style_local_line_width(arc_bg, LV_ARC_PART_BG, LV_STATE_DEFAULT, 7);
     lv_obj_set_style_local_line_color(arc_bg, LV_ARC_PART_BG, LV_STATE_DEFAULT, LV_COLOR_MAKE(230, 230, 230));
     lv_obj_set_style_local_line_width(arc_bg, LV_ARC_PART_INDIC, LV_STATE_DEFAULT, 0);
+    lv_obj_set_style_local_border_width(arc_bg, LV_ARC_PART_BG, LV_STATE_DEFAULT, 0);
+    lv_obj_set_style_local_border_width(arc_bg, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, 0);
     
-    // Progress arc (black fill showing moon phase progression)
+    // progress arc for each date
     if (completion_rate > 0) {
         lv_obj_t *arc_progress = lv_arc_create(parent, NULL);
         lv_obj_set_size(arc_progress, 56, 56);  // Much larger for better visibility
         lv_obj_align(arc_progress, NULL, LV_ALIGN_IN_TOP_LEFT, x, y);
         lv_arc_set_bg_angles(arc_progress, 0, 360);
         
-        // Calculate angle based on completion percentage
-        // Start from top (270 degrees) and go clockwise
+        // calc angle based on completion percentage
         uint16_t end_angle = (completion_rate * 360) / 100;
         lv_arc_set_angles(arc_progress, 270, 270 + end_angle);
         
         lv_obj_set_style_local_line_width(arc_progress, LV_ARC_PART_INDIC, LV_STATE_DEFAULT, 7);
         lv_obj_set_style_local_line_color(arc_progress, LV_ARC_PART_INDIC, LV_STATE_DEFAULT, LV_COLOR_BLACK);
         lv_obj_set_style_local_line_width(arc_progress, LV_ARC_PART_BG, LV_STATE_DEFAULT, 0);
+        lv_obj_set_style_local_border_width(arc_progress, LV_ARC_PART_INDIC, LV_STATE_DEFAULT, 0);
+        lv_obj_set_style_local_border_width(arc_progress, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, 0);
     }
 }
 
@@ -466,8 +467,11 @@ static void create_trends_view(void)
     lv_obj_align(trends_view, NULL, LV_ALIGN_CENTER, 0, 0);
     lv_obj_set_hidden(trends_view, true);
     lv_page_set_scrl_layout(trends_view, LV_LAYOUT_COLUMN_LEFT);
+    lv_page_set_scrollbar_mode(trends_view, LV_SCROLLBAR_MODE_AUTO);
+    lv_page_set_edge_flash(trends_view, true);
+    lv_obj_set_style_local_border_width(trends_view, LV_PAGE_PART_BG, LV_STATE_DEFAULT, 0);
     
-    // Get current or displayed month/year
+    // get current or displayed month/year
     time_t now = time(NULL);
     struct tm *tm_info = localtime(&now);
     
@@ -478,7 +482,7 @@ static void create_trends_view(void)
     int display_month = (displayed_month == -1) ? current_month : displayed_month;
     int display_year = (displayed_year == -1) ? current_year : displayed_year;
     
-    // tm struct for the displayed month
+    // displayed month
     struct tm display_tm = *tm_info;
     display_tm.tm_mon = display_month;
     display_tm.tm_year = display_year - 1900;
@@ -523,10 +527,10 @@ static void create_trends_view(void)
     
     // calendar container
     lv_obj_t *calendar_cont = lv_obj_create(trends_view, NULL);
-    lv_obj_set_size(calendar_cont, 450, 210);  // Reduced height to prevent cutoff
+    lv_obj_set_size(calendar_cont, 450, 300); 
     lv_obj_set_style_local_bg_opa(calendar_cont, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_OPA_TRANSP);
     lv_obj_set_style_local_border_width(calendar_cont, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, 0);
-    lv_obj_set_style_local_pad_all(calendar_cont, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, 5);  // Padding for spacing
+    lv_obj_set_style_local_pad_all(calendar_cont, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, 5); 
     
     const char *day_names[] = {"Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"};
     int col_spacing = 62; 
@@ -586,6 +590,7 @@ static void create_habits_view(void)
     uint16_t total_habits = ui_manage_habits_get_count();
     for (uint16_t i = 0; i < total_habits; i++) {
         habit_t *habit = ui_manage_habits_get_habit(i);
+        // need to get from cloud/database -> habit list and properties (name, is_active)
         if (habit && habit->is_active) {
             lv_obj_t *btn = lv_list_add_btn(habit_list, LV_SYMBOL_CHARGE, "");
             lv_obj_set_height(btn, 55);
@@ -604,6 +609,7 @@ static void create_habits_view(void)
             lv_obj_set_style_local_text_color(stats, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_GRAY);
             lv_obj_set_style_local_text_font(stats, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &font_en_18);
             
+            // need to get from cloud/database -> streak count (habit->streak_count)
             lv_obj_t *bar = lv_bar_create(btn, NULL);
             lv_obj_set_size(bar, 90, 8);
             lv_obj_align(bar, NULL, LV_ALIGN_IN_RIGHT_MID, -10, 0);
