@@ -23,20 +23,25 @@ typedef struct {
     lv_calendar_date_t custom_dates[10]; // frequency -> custom (max 10 dates)
     uint8_t num_custom_dates;
     uint16_t streak_count;
-    uint32_t last_completed_date; // unix timestamp of last completion
-    uint8_t skip_days_used; // number of skip days used in current 14-day period
-    uint32_t skip_days_reset_date; // unix timestamp for when skip days reset (every 14 days)
-    uint8_t is_flexible; // enable flexible streak mode with skip days
+    uint32_t last_completed_date; 
+    uint8_t skip_days_used;
+    uint32_t skip_days_reset_date; 
+    uint8_t is_flexible; 
 } habit_t;
+
+extern const uint8_t morn_hr;
+extern const uint8_t morn_min;
+extern const uint8_t afternoon_hr;
+extern const uint8_t afternoon_min;
+extern const uint8_t night_hr;
+extern const uint8_t night_min;
 
 void ui_manage_habits_init(void);
 void ui_manage_habits_show(void);
 void ui_manage_habits_hide(void);
 void ui_manage_habits_add_predefined(void);
-uint16_t ui_manage_habits_get_count(void);
 habit_t* ui_manage_habits_get_habit(uint16_t index);
 void ui_manage_habits_mark_completed(uint16_t index, bool completed);
-// Get remaining skip days for a habit (utility for display views: today_view, statistics)
 uint8_t ui_manage_habits_get_remaining_skips(const habit_t *habit);
 
 #ifdef __cplusplus

@@ -9,26 +9,14 @@ static const char *TAG = "geolocation";
 static geolocation_t g_location = {0};
 static bool g_location_fetched = false;
 
-// HTTP event handler for geolocation API
 static esp_err_t http_event_handler(esp_http_client_event_t *evt)
 {
     static char *output_buffer = NULL;
     static int output_len = 0;
 
     switch (evt->event_id) {
-        case HTTP_EVENT_ERROR:
-            ESP_LOGE(TAG, "HTTP client error");
-            break;
-        case HTTP_EVENT_ON_CONNECTED:
-            ESP_LOGI(TAG, "HTTP connected to ip-api.com");
-            break;
-        case HTTP_EVENT_HEADER_SENT:
-            break;
-        case HTTP_EVENT_ON_HEADER:
-            break;
         case HTTP_EVENT_ON_DATA:
             if (!esp_http_client_is_chunked_response(evt->client)) {
-                // Reallocate buffer if needed
                 if (output_buffer == NULL) {
                     output_buffer = (char *) malloc(evt->data_len + 1);
                     output_len = 0;
@@ -49,7 +37,7 @@ static esp_err_t http_event_handler(esp_http_client_event_t *evt)
         case HTTP_EVENT_ON_FINISH:
             if (output_buffer != NULL) {
                 ESP_LOGI(TAG, "API Response: %s", output_buffer);
-                // Parse JSON response
+    
                 cJSON *root = cJSON_Parse(output_buffer);
                 if (root) {
                     cJSON *region = cJSON_GetObjectItem(root, "regionName");
@@ -99,8 +87,13 @@ static esp_err_t http_event_handler(esp_http_client_event_t *evt)
                 output_len = 0;
             }
             break;
+        case HTTP_EVENT_ERROR:
+        case HTTP_EVENT_ON_CONNECTED:
+        case HTTP_EVENT_HEADERS_SENT:
+        case HTTP_EVENT_ON_HEADER:
         case HTTP_EVENT_REDIRECT:
-            // Handle redirects
+            break;
+        default:
             break;
     }
     return ESP_OK;

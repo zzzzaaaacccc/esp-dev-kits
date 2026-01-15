@@ -32,8 +32,6 @@ typedef struct {
 void ui_today_view_init(void)
 {
     lv_obj_t *obj_page = ui_page_get_obj();
-    
-    // initialize completion tracking
     // need to get data from cloud/database - load today's habit completion status
     max_habits = 10;
     habit_completed = (bool *)malloc(max_habits * sizeof(bool));
@@ -82,7 +80,6 @@ void ui_today_view_refresh(void)
 }
 
 
-
 // get current day of week (0=mon, 6=sun)
 static int get_current_day_of_week(void)
 {
@@ -112,16 +109,16 @@ static bool is_habit_scheduled_today(const habit_t *habit, int day_of_week)
 static int get_habit_time_value(const habit_t *habit)
 {
     switch (habit->time_option) {
-        case 0: return -1;  // Anytime - will be sorted first
-        case 1: return habit->hour * 60 + habit->minute;  // Specific time
-        case 2: return 8 * 60;   // Morning (8:00 AM)
-        case 3: return 14 * 60;  // Afternoon (2:00 PM)
-        case 4: return 20 * 60;  // Night (8:00 PM)
+        case 0: return -1;  // anytime
+        case 1: return habit->hour * 60 + habit->minute;  // specific time
+        case 2: return morn_hr * 60 + morn_min;
+        case 3: return afternoon_hr * 60 + afternoon_min;
+        case 4: return night_hr * 60 + night_min;
         default: return -1;
     }
 }
 
-//qsort (completed goes to the bottom)
+// qsort
 static int compare_habits_by_time(const void *a, const void *b)
 {
     const habit_item_t *habit_a = (const habit_item_t *)a;
@@ -185,9 +182,9 @@ static void checkbox_event_cb(lv_obj_t *obj, lv_event_t event)
         }
         
         // mark habit as completed/uncompleted (updates last_completed_date and streak)
-        ui_manage_habits_mark_completed(habit_idx, checked);
         // need to store in cloud/database - sync habit completion status immediately after marking
-        
+        ui_manage_habits_mark_completed(habit_idx, checked);
+
         // refresh entire list to move completed habits to bottom
         refresh_today_list();
         
@@ -204,7 +201,12 @@ static void refresh_today_list(void)
     lv_list_clean(today_list);
     
     int current_day = get_current_day_of_week();
-    uint16_t total_habits = ui_manage_habits_get_count();
+    
+    uint16_t total_habits = 0;
+    for (uint16_t i = 0; i < 100; i++) {
+        if (ui_manage_habits_get_habit(i) == NULL) break;
+        total_habits++;
+    }
     
     if (total_habits == 0) {
         lv_obj_t *btn = lv_list_add_btn(today_list, NULL, "No habits scheduled for today!");
@@ -235,7 +237,6 @@ static void refresh_today_list(void)
         habit_t *habit = today_habits[i].habit;
         uint16_t habit_idx = today_habits[i].index;
         
-        // create list button as cont
         lv_obj_t *btn = lv_list_add_btn(today_list, NULL, "");
         lv_obj_set_height(btn, 70);
         lv_btn_set_layout(btn, LV_LAYOUT_OFF);
@@ -249,8 +250,6 @@ static void refresh_today_list(void)
         lv_obj_align(cb, NULL, LV_ALIGN_IN_LEFT_MID, 5, 0);
         lv_obj_set_user_data(cb, (void *)(uintptr_t)habit_idx);
         lv_obj_set_event_cb(cb, checkbox_event_cb);
-        
-        // set checkbox state
         if (is_completed) {
             lv_checkbox_set_checked(cb, true);
         }
@@ -269,7 +268,7 @@ static void refresh_today_list(void)
         lv_obj_align(name_label, time_label, LV_ALIGN_OUT_RIGHT_MID, 15, -10);
         lv_obj_set_style_local_text_font(name_label, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &font_en_18);
         
-        // description (if exists)
+        // description
         if (strlen(habit->description) > 0) {
             lv_obj_t *desc_label = lv_label_create(btn, NULL);
             lv_label_set_text(desc_label, habit->description);
@@ -278,12 +277,10 @@ static void refresh_today_list(void)
             lv_obj_set_style_local_text_font(desc_label, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &font_en_18);
         }
         
-        // streak counter with flexible streak support
+        // streak counter
         char streak_str[50];
         if (habit->is_flexible) {
-            // remaining skip days from manage_habits logic
             uint8_t remaining_skips = ui_manage_habits_get_remaining_skips(habit);
-            
             snprintf(streak_str, sizeof(streak_str), LV_SYMBOL_CHARGE " %d | Skips: %d", 
                      habit->streak_count, remaining_skips);
         } else {
@@ -293,7 +290,7 @@ static void refresh_today_list(void)
         lv_obj_t *streak_label = lv_label_create(btn, NULL);
         lv_label_set_text(streak_label, streak_str);
         lv_obj_align(streak_label, NULL, LV_ALIGN_IN_RIGHT_MID, -10, 0);
-        lv_obj_set_user_data(streak_label, (void *)0xFFFFFFFF); // Mark as streak label
+        lv_obj_set_user_data(streak_label, (void *)0xFFFFFFFF); 
         
         if (habit->streak_count > 0) {
             lv_obj_set_style_local_text_color(streak_label, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_ORANGE);
@@ -301,15 +298,12 @@ static void refresh_today_list(void)
             lv_obj_set_style_local_text_color(streak_label, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_GRAY);
         }
         
-        // fade if completed
         if (is_completed) {
             lv_obj_set_style_local_text_opa(btn, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_OPA_50);
         }
     }
     
     free(today_habits);
-    
-    // show message if no habits tdy
     if (today_count == 0) {
         lv_obj_t *btn = lv_list_add_btn(today_list, NULL, "No habits scheduled for today!");
         lv_obj_set_style_local_text_color(btn, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_GRAY);

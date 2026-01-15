@@ -16,4 +16,4 @@ extern ui_func_desc_t ui_pomodoro_analytics_func;
 }
 #endif
 
-#endif /* UI_POMODORO_ANALYTICS_H */
+#endif // UI_POMODORO_ANALYTICS_H 

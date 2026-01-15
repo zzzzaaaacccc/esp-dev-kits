@@ -12,11 +12,11 @@ void ui_today_view_init(void);
 void ui_today_view_show(void);
 void ui_today_view_hide(void);
 
-//sync with updated habits
+// sync with updated habits
 void ui_today_view_refresh(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* UI_TODAY_VIEW_H */
+#endif // UI_TODAY_VIEW_H 

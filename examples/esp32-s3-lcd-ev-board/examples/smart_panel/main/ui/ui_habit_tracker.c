@@ -54,7 +54,6 @@ void ui_habit_tracker_init(void *data)
     ui_manage_habits_init();
     ui_today_view_init();
     ui_habit_tracker_statistics_init();
-
     ui_habit_tracker_state = ui_state_show;
 }
 
@@ -67,7 +66,6 @@ void ui_habit_tracker_show(void *data)
         lv_obj_set_hidden(_btn_today, false);
         lv_obj_set_hidden(_btn_statistics, false);
         lv_obj_set_hidden(_btn_manage_habits, false);
-
         ui_page_show("Habit Tracker");
         ui_today_view_show();
         ui_habit_tracker_state = ui_state_show;
@@ -94,27 +92,18 @@ static void _btn_cb(lv_obj_t *obj, lv_event_t event)
 {
     if (LV_EVENT_CLICKED == event) {
         if (obj == _btn_today) {
-            // hide other views
             ui_manage_habits_hide();
             ui_habit_tracker_statistics_hide();
-            
-            // show todays view
             ui_today_view_show();
             
         } else if (obj == _btn_statistics) {
-            // hide other views
             ui_manage_habits_hide();
             ui_today_view_hide();
-            
-            // show stats view
             ui_habit_tracker_statistics_show();
             
         } else if (obj == _btn_manage_habits) {
-            // hide other views
             ui_today_view_hide();
             ui_habit_tracker_statistics_hide();
-            
-            // show manage habits view
             ui_manage_habits_show();
         }
     }

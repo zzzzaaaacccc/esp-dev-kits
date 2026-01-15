@@ -35,7 +35,7 @@ static lv_chart_series_t *_focus_time_series = NULL;
 // need to get data from cloud/database - fetch weekly focus time statistics 
 static uint16_t focus_time_data[] = { 25, 50, 75, 100, 50, 75, 180 }; // min/day
 
-/* Forward declarations */
+// Forward declarations
 static void _btn_back_cb(lv_obj_t *obj, lv_event_t event);
 static void _anim_chart_task(void *data);
 
@@ -45,7 +45,7 @@ void ui_pomodoro_analytics_init(void *data)
     ui_page_show("Pomodoro Analytics");
     obj_page_pomodoro_analytics = ui_page_get_obj();
 
-    // back button (top left) - consistent with ui_page style
+    // back button
     _btn_back = lv_btn_create(obj_page_pomodoro_analytics, NULL);
     lv_obj_set_size(_btn_back, 50, 50);
     lv_obj_align(_btn_back, NULL, LV_ALIGN_IN_TOP_LEFT, 10, 5);
@@ -61,7 +61,7 @@ void ui_pomodoro_analytics_init(void *data)
     lv_obj_set_style_local_value_font(_btn_back, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, &lv_font_montserrat_40);
     lv_obj_set_event_cb(_btn_back, _btn_back_cb);
 
-    // left (stats)
+    // left
     _stats_cont = lv_cont_create(obj_page_pomodoro_analytics, NULL);
     lv_obj_set_size(_stats_cont, 250, 280);
     lv_obj_align(_stats_cont, NULL, LV_ALIGN_IN_LEFT_MID, 10, 30);
@@ -83,24 +83,21 @@ void ui_pomodoro_analytics_init(void *data)
     lv_label_set_long_mode(_label_total_sessions, LV_LABEL_LONG_BREAK);
     lv_obj_set_width(_label_total_sessions, 240);
 
-    // total Time
+    // total time
     _label_total_time = lv_label_create(_stats_cont, NULL);
     lv_label_set_text(_label_total_time, "Total Time in Focus:\n600 minutes");
     lv_obj_set_style_local_text_font(_label_total_time, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &font_en_24);
     lv_label_set_long_mode(_label_total_time, LV_LABEL_LONG_BREAK);
     lv_obj_set_width(_label_total_time, 240);
 
-    // chart title 
+    // chart  
     _chart_title = lv_label_create(obj_page_pomodoro_analytics, NULL);
     lv_label_set_text(_chart_title, "Focus Time This Week");
     lv_obj_set_style_local_text_font(_chart_title, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &font_en_20);
     lv_obj_align(_chart_title, _stats_cont, LV_ALIGN_OUT_RIGHT_TOP, 20, 5);
-
-    // right (graph)
     _chart_focus_time = lv_chart_create(obj_page_pomodoro_analytics, NULL);
     lv_obj_set_size(_chart_focus_time, 440, 240);
 
-    // chart
     lv_chart_set_range(_chart_focus_time, 0, 200); // 0 to 200 minutes to accommodate 180
     lv_chart_set_point_count(_chart_focus_time, 7); // 7 days
     lv_obj_set_style_local_border_width(_chart_focus_time, LV_CHART_PART_BG, LV_STATE_DEFAULT, 0);
@@ -149,7 +146,6 @@ void ui_pomodoro_analytics_show(void *data)
         ui_page_show("Pomodoro Analytics");
         ui_pomodoro_analytics_state = ui_state_show;
         
-        // restart animation task
         xTaskCreate(
             (TaskFunction_t)        _anim_chart_task,
             (const char *const)     "Analytics Chart Task",
@@ -171,20 +167,15 @@ void ui_pomodoro_analytics_hide(void *data)
         lv_obj_set_hidden(_label_total_sessions, true);
         lv_obj_set_hidden(_label_total_time, true);
         lv_obj_set_hidden(title, true);
-
-        
-        // clear chart series
         if (_focus_time_series) {
             lv_chart_clear_series(_chart_focus_time, _focus_time_series);
             _focus_time_series = NULL;
         }
-        
         ui_page_hide(NULL);
         ui_pomodoro_analytics_state = ui_state_hide;
     }
 }
 
-// back button callback
 static void _btn_back_cb(lv_obj_t *obj, lv_event_t event)
 {
     if (event == LV_EVENT_CLICKED)
@@ -194,7 +185,6 @@ static void _btn_back_cb(lv_obj_t *obj, lv_event_t event)
     }
 }
 
-// animation for task
 static void _anim_chart_task(void *data)
 {
     TickType_t tick = 0;
@@ -220,11 +210,9 @@ static void _anim_chart_task(void *data)
     tick = xTaskGetTickCount();
     
     while (1) {
-        // delete task if go to other UI
         if (ui_state_hide == ui_pomodoro_analytics_state) {
             vTaskDelete(NULL);
         }
-        
         if (i < 7) {
             bsp_display_lock(0);
             lv_chart_set_point_id(_chart_focus_time, _focus_time_series, focus_time_data[i], i);

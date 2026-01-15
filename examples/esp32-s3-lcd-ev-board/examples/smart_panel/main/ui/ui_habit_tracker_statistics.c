@@ -82,7 +82,6 @@ void ui_habit_tracker_statistics_hide(void)
 
 void ui_habit_tracker_statistics_refresh(void)
 {   
-    // delete existing views
     if (overview_view) {
         lv_obj_del(overview_view);
         overview_view = NULL;
@@ -96,12 +95,10 @@ void ui_habit_tracker_statistics_refresh(void)
         habits_view = NULL;
     }
     
-    // recreate all views
     create_overview_view();
     create_trends_view();
     create_habits_view();
     
-    // show current view based on selection
     switch (current_view) {
         case STATS_VIEW_OVERVIEW:
             if (overview_view) lv_obj_set_hidden(overview_view, false);
@@ -119,12 +116,10 @@ void ui_habit_tracker_statistics_set_view(stats_view_type_t view)
 {
     current_view = view;
     
-    // hide all views
     if (overview_view) lv_obj_set_hidden(overview_view, true);
     if (trends_view) lv_obj_set_hidden(trends_view, true);
     if (habits_view) lv_obj_set_hidden(habits_view, true);
     
-    // show selected view
     switch (view) {
         case STATS_VIEW_OVERVIEW:
             if (overview_view) lv_obj_set_hidden(overview_view, false);
@@ -166,8 +161,6 @@ static void prev_month_btn_cb(lv_obj_t *obj, lv_event_t event)
             displayed_month = 11;
             displayed_year--;
         }
-        
-        // refresh trends view with new month data
         ui_habit_tracker_statistics_refresh();
     }
 }
@@ -187,27 +180,21 @@ static void next_month_btn_cb(lv_obj_t *obj, lv_event_t event)
             displayed_month = 0;
             displayed_year++;
         }
-        
-        // refresh trends view with new month data
         ui_habit_tracker_statistics_refresh();
     }
 }
 
-// tab button event callback handler
+// button event callback handler
 static void tab_event_cb(lv_obj_t *obj, lv_event_t event)
 {
     if (event == LV_EVENT_CLICKED) {
         uint16_t tab_id = lv_btnmatrix_get_active_btn(obj);
-        
-        // clear all button states
         lv_btnmatrix_clear_btn_ctrl_all(obj, LV_BTNMATRIX_CTRL_CHECK_STATE);
         
-        // hide all views
         if (overview_view) lv_obj_set_hidden(overview_view, true);
         if (trends_view) lv_obj_set_hidden(trends_view, true);
         if (habits_view) lv_obj_set_hidden(habits_view, true);
         
-        // show selected view and update button state
         switch (tab_id) {
             case 0: 
                 current_view = STATS_VIEW_OVERVIEW;
@@ -253,7 +240,7 @@ static bool is_habit_scheduled_today(const habit_t *habit, int day_of_week)
     return false;
 }
 
-//overall stats, today's completion rate for overview tab
+// overall stats, today's completion rate for overview tab
 static void calculate_statistics(uint16_t *completed, uint16_t *started, uint16_t *not_done, uint16_t *completion_rate)
 {
     *completed = 0;
@@ -273,16 +260,14 @@ static void calculate_statistics(uint16_t *completed, uint16_t *started, uint16_
     timeinfo->tm_sec = 0;
     time_t today_start = mktime(timeinfo);
     
-    // get current day of week for filtering
     int current_day = get_current_day_of_week();
     
-    uint16_t total_habits = ui_manage_habits_get_count();
-    uint16_t total_today_habits = 0; // habits that should be done today
+    uint16_t total_today_habits = 0;
     
-    for (uint16_t i = 0; i < total_habits; i++) {
+    for (uint16_t i = 0; i < 100; i++) {
         habit_t *habit = ui_manage_habits_get_habit(i);
+        if (habit == NULL) break;
         
-        // count habits scheduled for today
         if (habit && is_habit_scheduled_today(habit, current_day)) {
             total_today_habits++;
             
@@ -290,7 +275,6 @@ static void calculate_statistics(uint16_t *completed, uint16_t *started, uint16_
             if (habit->last_completed_date > 0 && habit->last_completed_date >= today_start) {
                 (*completed)++;
             } 
-            // not completed today - check if scheduled time has passed
             else {
                 bool time_has_passed = false;
                 
@@ -305,7 +289,7 @@ static void calculate_statistics(uint16_t *completed, uint16_t *started, uint16_
                             time_has_passed = true;
                         }
                         break;
-                    case 2: // morning (8am)
+                    case 2: // morn (8am)
                         if (current_hour > 8 || (current_hour == 8 && current_minute > 0)) {
                             time_has_passed = true;
                         }
@@ -354,7 +338,7 @@ static void draw_circular_progress(lv_obj_t *parent, int16_t x, int16_t y, uint1
     lv_obj_set_style_local_bg_opa(circle_cont, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_OPA_TRANSP);
     lv_obj_set_style_local_border_width(circle_cont, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, 0);
     
-    // background arc (gray)
+    // background arc
     lv_obj_t *arc_bg = lv_arc_create(circle_cont, NULL);
     lv_obj_set_size(arc_bg, 160, 160);
     lv_obj_align(arc_bg, NULL, LV_ALIGN_CENTER, 0, 0);
@@ -364,7 +348,7 @@ static void draw_circular_progress(lv_obj_t *parent, int16_t x, int16_t y, uint1
     lv_obj_set_style_local_line_color(arc_bg, LV_ARC_PART_BG, LV_STATE_DEFAULT, LV_COLOR_MAKE(230, 230, 230));
     lv_obj_set_style_local_line_width(arc_bg, LV_ARC_PART_INDIC, LV_STATE_DEFAULT, 0);
     
-    // progress arc (colored)
+    // progress arc
     lv_obj_t *arc_progress = lv_arc_create(circle_cont, NULL);
     lv_obj_set_size(arc_progress, 160, 160);
     lv_obj_align(arc_progress, NULL, LV_ALIGN_CENTER, 0, 0);
@@ -424,10 +408,10 @@ static void get_monthly_completion_data(int *completion_rates, int *days_in_mont
 }
 
 
-// arc-based progress indicator for moon phase completion rate for trends tab
+// arc progress indicator for trends tab
 static void draw_completion_indicator(lv_obj_t *parent, int16_t x, int16_t y, int completion_rate)
 {
-    // background circle arc (light gray ring)
+    // background arc
     lv_obj_t *arc_bg = lv_arc_create(parent, NULL);
     lv_obj_set_size(arc_bg, 56, 56);  // Much larger for better visibility
     lv_obj_align(arc_bg, NULL, LV_ALIGN_IN_TOP_LEFT, x, y);
@@ -508,8 +492,7 @@ static void create_trends_view(void)
     // month/year title
     lv_obj_t *title = lv_label_create(title_cont, NULL);
     char title_buf[30];
-    const char *months[] = {"January", "February", "March", "April", "May", "June",
-                            "July", "August", "September", "October", "November", "December"};
+    const char *months[] = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
     snprintf(title_buf, sizeof(title_buf), "%s %d", months[display_month], display_year);
     lv_label_set_text(title, title_buf);
     lv_obj_align(title, NULL, LV_ALIGN_IN_TOP_MID, 0, 5);
@@ -557,8 +540,8 @@ static void create_trends_view(void)
     int col = first_day_of_week;
     
     for (int day = 1; day <= days_in_month; day++) {
-        int x = start_x + col * col_spacing - 8;  // Center 56px circle in 62px column
-        int y = 22 + row * 56;  // 22px top offset for day labels, 56px per row (reduced by 2)
+        int x = start_x + col * col_spacing - 8; 
+        int y = 22 + row * 56; 
         
         // draw the circular completion indicator
         draw_completion_indicator(calendar_cont, x, y, completion_rates[day - 1]);
@@ -572,7 +555,7 @@ static void create_trends_view(void)
     }
 }
 
-//indv habits view
+// indv habits view
 static void create_habits_view(void)
 {
     habits_view = lv_page_create(content_area, NULL);
@@ -587,9 +570,9 @@ static void create_habits_view(void)
     lv_obj_t *habit_list = lv_list_create(habits_view, NULL);
     lv_obj_set_size(habit_list, 460, 190);
     
-    uint16_t total_habits = ui_manage_habits_get_count();
-    for (uint16_t i = 0; i < total_habits; i++) {
+    for (uint16_t i = 0; i < 100; i++) {
         habit_t *habit = ui_manage_habits_get_habit(i);
+        if (habit == NULL) break;
         // need to get from cloud/database -> habit list and properties (name, is_active)
         if (habit && habit->is_active) {
             lv_obj_t *btn = lv_list_add_btn(habit_list, LV_SYMBOL_CHARGE, "");
