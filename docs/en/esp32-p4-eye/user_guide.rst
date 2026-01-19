@@ -131,6 +131,19 @@ The key components of the back PCB are described in a clockwise direction. To fa
    * - Camera
      - 2 MP resolution with manually adjustable focal length. For details, refer to `Camera Datasheet`_.
 
+
+Application Examples
+--------------------
+
+The following application examples are available for ESP32-P4-EYE:
+
+- :project:`Factory Demo <examples/esp32-p4-eye/examples/factory_demo>` - Demonstrates a comprehensive mini camera application for ESP32-P4-EYE that supports photo capture, timed capture, video recording, album preview, USB SD card mounting, image parameter configuration, and AI features including face detection, pedestrian detection, and YOLOv11-nano-based object detection.
+
+For more examples and the latest updates, please refer to the :project:`examples <examples/esp32-p4-eye>` folder.
+
+To explore the application examples or to develop your own, please follow the steps outlined in the `Application Development`_ section.
+
+
 Application Development
 -----------------------
 
@@ -162,8 +175,6 @@ Software Setup
 ^^^^^^^^^^^^^^
 
 To set up your development environment and flash an application example onto your board, please follow the `installation instructions <https://docs.espressif.com/projects/esp-idf/en/latest/esp32p4/get-started/index.html#installation>`__ in `ESP-IDF Get Started <https://docs.espressif.com/projects/esp-idf/en/latest/esp32p4/get-started/index.html>`__.
-
-You can find examples for ESP32-P4-EYE by accessing :project:`Examples <examples/esp32-p4-eye/examples>`. To configure project options, enter ``idf.py menuconfig`` in the example directory.
 
 .. _Hardware-reference:
 

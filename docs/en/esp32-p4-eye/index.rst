@@ -5,7 +5,7 @@ ESP32-P4-EYE
 
 ESP32-P4-EYE is a vision development board based on the ESP32-P4 chip, mainly targeting camera applications.
 
-You can find examples for ESP32-P4-EYE by accessing :project:`Examples <examples/esp32-p4-eye/examples>`.
+You can find examples for ESP32-P4-EYE by accessing :project:`Examples <examples/esp32-p4-eye>`.
 
 .. toctree::
     :maxdepth: 2

@@ -122,6 +122,19 @@ ESP32-S3-USB-OTG 开发板包括以下两部分：
 
    ESP32-S3-USB-OTG 子板（点击图片放大）
 
+
+应用示例
+~~~~~~~~
+
+以下为开发板的应用示例：
+
+- :project:`factory <examples/esp32-s3-usb-otg/examples/factory>` - 演示了 ESP32-S3-USB-OTG 开发板的工厂演示，为使用 ESP-IDF 和 ESP Launchpad 构建、烧录和监控项目提供了参考。
+
+更多示例及最新更新请参阅 :project:`examples <examples/esp32-s3-usb-otg>` 文件夹。
+
+如需尝试应用示例或开发自定义应用，请参照 `应用程序开发`_ 小节中的步骤进行操作。
+
+
 应用程序开发
 ~~~~~~~~~~~~
 
@@ -138,14 +151,6 @@ ESP32-S3-USB-OTG 上电前，请首先确认开发板完好无损。
 ^^^^^^^^
 
 请前往 `快速入门 <https://docs.espressif.com/projects/esp-idf/zh_CN/latest/esp32s3/get-started/index.html>`__ 中 `详细安装步骤 <https://docs.espressif.com/projects/esp-idf/zh_CN/latest/esp32s3/get-started/index.html#get-started-step-by-step>`__ 一节查看如何快速设置开发环境。
-
-工程选项
-^^^^^^^^
-
-我们为 ESP32-S3-USB-OTG 开发板提供了应用示例，存放在 :project:`Examples <examples/esp32-s3-usb-otg/examples>` 文件夹中。
-
-您可以在示例目录下，输入 ``idf.py menuconfig`` 配置工程选项。
-
 
 内容和包装
 ~~~~~~~~~~

@@ -16,11 +16,13 @@
 /docs/*/esp32-c3-devkitc-02/                @documentation/codeowners/esp32c3       @documentation/codeowners/hw
 /docs/*/esp32-c3-devkitm-1/                 @documentation/codeowners/esp32c3       @documentation/codeowners/hw
 /docs/*/esp32-c3-lcdkit/                    @documentation/codeowners/esp32c3       @documentation/codeowners/hw @documentation/codeowners/ae
+/docs/*/esp32-c3-devkit-rust-2/                    @documentation/codeowners/esp32c3       @documentation/codeowners/hw @documentation/codeowners/ae
 
 # ESP32-C5 Boards User guide
 
 /docs/*/index/esp32c5-index.inc             @documentation/codeowners/esp32c5       @documentation/codeowners/hw
 /docs/*/esp32-c5-devkitc-1/                 @documentation/codeowners/esp32c5       @documentation/codeowners/hw
+/docs/*/esp-sensairshuttle/                 @documentation/codeowners/esp32c5       @documentation/codeowners/hw
 
 # ESP32-C6 Boards User guide
 
@@ -91,7 +93,7 @@
 /docs/_static/*.pdf                         @documentation/codeowners/esp-dev-kits
 /docs/_static/*.png                         @documentation/codeowners/esp-dev-kits
 /docs/_static/*.svg                         @documentation/codeowners/esp-dev-kits
-/docs/_static/*.html                        @documentation/codeowners/esp-dev-kits 
+/docs/_static/*.html                        @documentation/codeowners/esp-dev-kits
 /docs/*/eol/                                @documentation/codeowners/esp-dev-kits
 README*.md                                  @documentation/codeowners/esp-dev-kits
 /docs/README.md                             @documentation/codeowners/esp-dev-kits

@@ -122,6 +122,19 @@ The following table starts with the Yellow LED on the left, and introduces the m
 
    ESP32-S3-USB-OTG Subboard (click to enlarge)
 
+
+Application Examples
+~~~~~~~~~~~~~~~~~~~~
+
+The following application examples are available for ESP32-S3-USB-OTG:
+
+- :project:`factory <examples/esp32-s3-usb-otg/examples/factory>` - Demonstrates a factory demo for the ESP32-S3-USB-OTG development board, providing a reference for building, flashing, and monitoring projects using ESP-IDF and ESP Launchpad.
+
+For more examples and the latest updates, please refer to the :project:`examples <examples/esp32-s3-usb-otg>` folder.
+
+To explore the application examples or to develop your own, please follow the steps outlined in the `Start Application Development`_ section.
+
+
 Start Application Development
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -138,14 +151,6 @@ Software Setup
 ^^^^^^^^^^^^^^
 
 Please proceed to `Get Started <https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/get-started/index.html>`__, where Section `Installation Step by Step <https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/get-started/index.html#get-started-step-by-step>`__ will quickly help you set up the development environment and then flash an application example onto your board.
-
-Project Option
-^^^^^^^^^^^^^^
-
-An example is provided for ESP32-S3-USB-OTG under the folder :project:`Examples <examples/esp32-s3-usb-otg/examples>`.
-
-You can configure project options by entering ``idf.py menuconfig`` in the example directory.
-
 
 Contents and Packaging
 ~~~~~~~~~~~~~~~~~~~~~~

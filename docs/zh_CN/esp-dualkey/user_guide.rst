@@ -110,6 +110,19 @@ ESP-DualKey 主控采用乐鑫 ESP32-S3 芯片，支持 2.4 GHz Wi-Fi 和 Blueto
      - 支持 Deep-sleep 模式以节省功耗。
 
 
+应用示例
+--------
+
+以下为开发板的应用示例：
+
+- :project:`ESP-DualKey Smart Button Controller Example <examples/esp-dualkey/examples/factory_demo>` - 演示了如何使用 ESP-DualKey 开发板作为智能按钮控制器，具有智能家居控制、蓝牙键盘和 USB 键盘功能，允许通过物理开关进行模式切换。
+- :project:`test_apps <examples/esp-dualkey/components/esp_hid/test_apps>` - 为 ESP32 和 ESP32-C3 芯片上的 esp_hid 组件提供单元测试，支持开发者验证代码功能并根据需要添加新的测试案例。
+
+更多示例及最新更新请参阅 :project:`examples <examples/esp-dualkey>` 文件夹。
+
+如需尝试应用示例或开发自定义应用，请参照 `开始开发应用`_ 小节中的步骤进行操作。
+
+
 开始开发应用
 ----------------
 
@@ -144,8 +157,6 @@ ESP-DualKey 主控采用乐鑫 ESP32-S3 芯片，支持 2.4 GHz Wi-Fi 和 Blueto
   开发板使用 USB 端口与电脑通信。大多数操作系统（Windows、Linux、macOS）已预装所需驱动，开发板插入后可自动识别。如无法识别设备或无法建立串口连接，请参考 `如何建立串口连接 <https://docs.espressif.com/projects/esp-idf/zh_CN/latest/esp32s3/get-started/establish-serial-connection.html>`__ 获取安装驱动的详细步骤。
 
 乐鑫为多种开发板提供了板级支持包 (BSP)，可帮助您更轻松、高效地初始化和使用板载的主要外设，如按键、LED 和电源管理等。请访问 `esp-bsp <https://github.com/espressif/esp-bsp>`__ 查询支持的所有开发板。
-
-开发板应用示例存放在 :project:`Examples <examples/esp-dualkey/examples>` 目录中。
 
 
 硬件参考

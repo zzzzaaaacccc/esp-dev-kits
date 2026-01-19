@@ -49,7 +49,8 @@ ESP32C3_DOCS = ['*.rst',
                 'index/esp32c3-index.inc',
                 'esp32-c3-devkitc-02/*.rst',
                 'esp32-c3-devkitm-1/*.rst',
-                'esp32-c3-lcdkit/*.rst'
+                'esp32-c3-lcdkit/*.rst',
+                'esp32-c3-devkit-rust-2/*.rst'
                 ]
 ESP32C6_DOCS = ['*.rst',
                 'index/esp32c6-index.inc',
@@ -71,7 +72,8 @@ ESP32P4_DOCS = ['*.rst',
                 ]
 ESP32C5_DOCS = ['*.rst',
                 'index/esp32c5-index.inc',
-                'esp32-c5-devkitc-1/*.rst'
+                'esp32-c5-devkitc-1/*.rst',
+                'esp-sensairshuttle/*.rst'
                 ]
 ESP32S2_DOCS = ['*.rst',
                 'index/esp32s2-index.inc',

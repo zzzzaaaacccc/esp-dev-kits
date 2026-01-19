@@ -105,6 +105,14 @@ The key components of the board are described from front view to back view, star
    * - 14
      - RJ45 Ethernet Port
      - An Ethernet Port supporting 10/100 Mbps adaptive.
+
+.. list-table::
+   :widths: 10 20 70
+   :header-rows: 1
+
+   * - No.
+     - Key Component
+     - Description
    * - 15
      - USB Full-speed Port
      - USB Type-C port that supports USB 2.0 Full-speed data rate. It can be used as the power supply interface for the development board and as a communication interface.
@@ -177,6 +185,21 @@ Optionally, the following accessories are included in the package:
 
   Please note that the ribbon cable in the **forward direction**, whose strips at the two ends are on the same side, should be used for the **camera**; the ribbon cable in the **reverse direction**, whose strips at the two ends are on different sides, should be used for the **LCD**.
 
+
+Application Examples
+--------------------
+
+The following application examples are available for ESP32-P4-Function-EV-Board v1.5.2:
+
+- :project:`ESP_Brookesia Phone <examples/esp32-p4-function-ev-board/examples/esp_brookesia_phone>` - Demonstrates an Android-like interface with multiple applications using ESP_Brookesia, utilizing MIPI-DSI, MIPI-CSI, ESP32-C6, SD card, and audio interfaces on a development board, providing a basis for efficient multimedia application development.
+- :project:`LVGL Demo v8 <examples/esp32-p4-function-ev-board/examples/lvgl_demo_v8>` - Demonstrates how to port LVGL v8 and conduct performance testing using LVGL's built-in demos on an ESP32-P4-Function-EV-Board with a 7-inch LCD screen, serving as a foundation for developing applications based on LVGL v8.
+- :project:`LVGL Demo v9 <examples/esp32-p4-function-ev-board/examples/lvgl_demo_v9>` - Demonstrates how to port LVGL v9 and conduct performance testing using LVGL's built-in demos on an ESP32-P4-Function-EV-Board, serving as a basis for developing applications based on LVGL v9.
+
+For more examples and the latest updates, please refer to the :project:`examples <examples/esp32-p4-function-ev-board>` folder.
+
+To explore the application examples or to develop your own, please follow the steps outlined in the `Start Application Development`_ section.
+
+
 Start Application Development
 ------------------------------------
 
@@ -240,8 +263,6 @@ Software Setup
 ^^^^^^^^^^^^^^
 
 To set up your development environment and flash an application example onto your board, please follow the instructions in `ESP-IDF Get Started <https://docs.espressif.com/projects/esp-idf/en/latest/esp32p4/get-started/index.html>`__.
-
-You can find examples for ESP32-P4-Function-EV by accessing :project:`Examples <examples/esp32-p4-function-ev-board/examples>`. To configure project options, enter ``idf.py menuconfig`` in the example directory.
 
 Hardware Reference
 ==================

@@ -97,3 +97,11 @@ managed_components
 # launpad build directory
 binaries
 output.json
+
+# Generated board manager code
+**/gen_bmgr_codes/
+**/sdkconfig.bmgr_board.old
+**/board_manager.defaults
+
+# environment variables
+environment.py

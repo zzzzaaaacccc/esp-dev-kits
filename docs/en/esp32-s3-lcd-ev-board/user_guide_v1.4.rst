@@ -239,6 +239,25 @@ With the USB Type-A adapter, the mainboard can serve as a USB host for connectio
 
     USB Type-A Adapter v1.1 - Connected to USB Devices (Click to Enlarge)
 
+
+Application Examples
+--------------------
+
+The following application examples are available for ESP32-S3-LCD-EV-Board v1.4:
+
+- :project:`86-box Demo Example <examples/esp32-s3-lcd-ev-board/examples/86box_demo>` - Demonstrates a GUI demo designed for a control panel (480x480) typically used for wall-mounted 86 type box, providing a smooth graphic operation experience with features like weather report, hot water heater, warm air heater page, and audio output function.
+- :project:`86-box Smart Panel Example <examples/esp32-s3-lcd-ev-board/examples/86box_smart_panel>` - Demonstrates a factory demo for a smart control panel with offline voice recognition function, providing a reference for flashing the board and troubleshooting potential issues.
+- :project:`LVGL Demos Example <examples/esp32-s3-lcd-ev-board/examples/lvgl_demos>` - Demonstrates how to run LVGL's demos on an ESP32-S3-LCD-EV-Board, showcasing three methods to avoid tearing effect using different buffering modes, and providing performance testing results for different buffering modes.
+- :project:`Smart Panel Example <examples/esp32-s3-lcd-ev-board/examples/smart_panel>` - Demonstrates a factory demo for a smart control panel with offline voice recognition function, providing instructions on how to flash the example to the ESP32-S3-LCD-EV-Board and configure it for use.
+- :project:`USB Camera LCD Example <examples/esp32-s3-lcd-ev-board/examples/usb_camera_lcd>` - Demonstrates how to use an LCD display to show video captured from a USB camera, with options to transfer frames to Wi-Fi and log memory information, providing a basis for developing applications with ESP32-S3-LCD-EV-Board.
+- :project:`USB File System <examples/esp32-s3-lcd-ev-board/examples/usb_msc_file_sys>` - Demonstrates how to use USB HOST on ESP32-S2/ESP32-S3 to read and write files on a USB flash drive, displaying its contents on the screen, with support for various file formats for preview.
+- :project:`USB Keyboard Example <examples/esp32-s3-lcd-ev-board/examples/usb_keyboard>` - Demonstrates how to use LCD and LVGL to simulate a USB keyboard on the ESP32-S3-LCD-EV-Board, providing a GUI of a USB keyboard that can interact with a PC like a real keyboard.
+
+For more examples and the latest updates, please refer to the :project:`examples <examples/esp32-s3-lcd-ev-board>` folder.
+
+To explore the application examples or to develop your own, please follow the steps outlined in the `Start Application Development`_ section.
+
+
 Start Application Development
 =============================
 
@@ -279,7 +298,7 @@ Now the board is ready for software setup.
 Software Setup
 --------------
 
-The development framework of ESP32-S3-LCD-EV-Board is `ESP-IDF <https://github.com/espressif/esp-idf>`_. ESP-IDF is a FreeRTOS-based SoC development framework with a bunch of components including LCD, ADC, RMT, and SPI. An example is provided for ESP32-S3-LCD-EV-Board under the folder :project:`Examples <examples/esp32-s3-lcd-ev-board/examples>`. You can configure project options by entering ``idf.py menuconfig`` in the example directory.
+The development framework of ESP32-S3-LCD-EV-Board is `ESP-IDF <https://github.com/espressif/esp-idf>`_. ESP-IDF is a FreeRTOS-based SoC development framework with a bunch of components including LCD, ADC, RMT, and SPI.
 
 To learn how to quickly set up your development environment, please go to `Get Started <https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/get-started/index.html>`__ > `Installation <https://docs.espressif.com/projects/esp-idf/zh_CN/latest/esp32s3/get-started/index.html#get-started- step-by-step>`__.
 

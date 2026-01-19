@@ -239,6 +239,25 @@ USB Type-A 转接板
 
     USB Type-A 转接板 v1.1 - 连接 USB 设备（点击放大）
 
+
+应用示例
+--------
+
+以下为开发板的应用示例：
+
+- :project:`86-box Demo Example <examples/esp32-s3-lcd-ev-board/examples/86box_demo>` - 演示了一个为控制面板 (480x480) 设计的 GUI 示例，适用于常见的墙装 86 型底盒，提供了流畅的图形操作体验，包含天气信息、热水器、暖风机页面以及音频输出等功能。
+- :project:`86-box Smart Panel Example <examples/esp32-s3-lcd-ev-board/examples/86box_smart_panel>` - 演示了一个用于智能控制面板的工厂示例，支持离线语音识别功能，并为烧录开发板及排查潜在问题提供参考。
+- :project:`LVGL Demos Example <examples/esp32-s3-lcd-ev-board/examples/lvgl_demos>` - 演示如何在 ESP32-S3-LCD-EV-Board 上运行 LVGL 示例，展示了三种使用不同缓冲模式避免画面撕裂的方法，并提供了不同缓冲模式的性能测试结果。
+- :project:`Smart Panel Example <examples/esp32-s3-lcd-ev-board/examples/smart_panel>` - 演示了一个用于智能控制面板的工厂示例，支持离线语音识别功能，提供了如何将示例烧录至 ESP32-S3-LCD-EV-Board 并配置其使用的指导。
+- :project:`USB Camera LCD Example <examples/esp32-s3-lcd-ev-board/examples/usb_camera_lcd>` - 演示如何使用 LCD 显示屏显示从 USB 摄像头捕获的视频，支持将帧传输到 Wi-Fi 和记录内存信息，为基于 ESP32-S3-LCD-EV-Board 的应用开发提供基础。
+- :project:`USB File System <examples/esp32-s3-lcd-ev-board/examples/usb_msc_file_sys>` - 演示如何在 ESP32-S2/ESP32-S3 上使用 USB HOST 来读取和写入 USB 闪存驱动器上的文件，并在屏幕上显示其内容，支持预览各种文件格式。
+- :project:`USB Keyboard Example <examples/esp32-s3-lcd-ev-board/examples/usb_keyboard>` - 演示如何在 ESP32-S3-LCD-EV-Board 上使用 LCD 和 LVGL 模拟 USB 键盘，提供一个可以像真实键盘一样与 PC 交互的 USB 键盘的图形用户界面。
+
+更多示例及最新更新请参阅 :project:`examples <examples/esp32-s3-lcd-ev-board>` 文件夹。
+
+如需尝试应用示例或开发自定义应用，请参照 `应用程序开发`_ 小节中的步骤进行操作。
+
+
 应用程序开发
 ======================
 
@@ -279,7 +298,7 @@ USB Type-A 转接板
 软件设置
 --------
 
-ESP32-S3-LCD-EV-Board 的开发框架为 `ESP-IDF <https://github.com/espressif/esp-idf>`_。ESP-IDF 是基于 FreeRTOS 的乐鑫 SoC 开发框架，具有众多组件，包括 LCD、ADC、RMT、SPI 等。开发板应用示例存放在 :project:`Examples <examples/esp32-s3-lcd-ev-board/examples>` 文件夹下，在示例目录下输入 ``idf.py menuconfig`` 可以配置工程选项。
+ESP32-S3-LCD-EV-Board 的开发框架为 `ESP-IDF <https://github.com/espressif/esp-idf>`_。ESP-IDF 是基于 FreeRTOS 的乐鑫 SoC 开发框架，具有众多组件，包括 LCD、ADC、RMT、SPI 等。
 
 了解如何快速设置开发环境，请前往 `快速入门 <https://docs.espressif.com/projects/esp-idf/zh_CN/latest/esp32s3/get-started/index.html>`__ > `安装 <https://docs.espressif.com/projects/esp-idf/zh_CN/latest/esp32s3/get-started/index.html#get-started-step-by-step>`__。
 

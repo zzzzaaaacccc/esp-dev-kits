@@ -135,7 +135,19 @@ The **ESP32-C3-LCDkit_DB** subboard supports a 1.28" LCD screen with SPI interfa
 Software Support
 ----------------
 
-The ESP32-C3-LCDkit development framework is `ESP-IDF <https://github.com/espressif/esp-idf>`_. ESP-IDF is a FreeRTOS-based SoC development framework with a bunch of components including LCD, ADC, RMT, and SPI. An example is provided for ESP32-C3-LCDkit under the folder :project:`Examples <examples/esp32-c3-lcdkit/examples>`. You can configure project options by entering ``idf.py menuconfig`` in the example directory.
+The ESP32-C3-LCDkit development framework is `ESP-IDF <https://github.com/espressif/esp-idf>`_. ESP-IDF is a FreeRTOS-based SoC development framework with a bunch of components including LCD, ADC, RMT, and SPI. An example is provided for ESP32-C3-LCDkit under the folder :project:`Examples <examples/esp32-c3-lcdkit>`. You can configure project options by entering ``idf.py menuconfig`` in the example directory.
+
+
+Application Examples
+--------------------
+
+The following application examples are available for ESP32-C3-LCDkit:
+
+- :project:`Knob Panel Example <examples/esp32-c3-lcdkit/examples/knob_panel>` - Demonstrates a GUI demo for a knob panel with voice playback functionality, providing a reference for developing similar applications using the ESP32-C3-LCDkit.
+
+For more examples and the latest updates, please refer to the :project:`examples <examples/esp32-c3-lcdkit>` folder.
+
+To explore the application examples or to develop your own, please follow the steps outlined in the `Start Application Development`_ section.
 
 
 Start Application Development

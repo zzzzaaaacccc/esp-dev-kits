@@ -102,6 +102,13 @@ ESP32-P4-Function-EV-Board 是一款基于 ESP32-P4 芯片的多媒体开发板�
      - USB 2.0 Type-A 接口与 ESP32-P4 芯片的 USB 2.0 OTG High-Speed 接口连接，支持 USB 2.0 标准。通过该接口进行 USB 通讯时，ESP32-P4 作为 USB Host 与其它 USB device 设备连接，对外提供最高 500 mA 电流。USB 2.0 Type-C 接口和 USB 2.0 Type-A 接口需要二选一使用，不能同时使用。
    * - Power Switch（电源开关）
      - 电源开关。拨向 ON 一侧，开发板连接 5 V 电源上电；拨离 ON 一侧，开发板断开 5 V 电源掉电。
+
+.. list-table::
+   :widths: 30 70
+   :header-rows: 1
+
+   * - 主要组件
+     - 介绍
    * - Switch（开关）
      - TPS2051C 是一款 USB 电源开关，提供 500 mA 输出电流限制。
    * - MIPI CSI Connector（MIPI CSI 连接器）
@@ -149,6 +156,21 @@ ESP32-P4-Function-EV-Board 的包装盒中包含以下可选配件：
 .. 注解::
 
   同向线序的排线为摄像头排线，其排线两侧的金属触点在同一面上；反向线序的排线为屏幕排线，其排线两侧的金属触点在不同面上。
+
+
+应用示例
+--------
+
+以下为开发板的应用示例：
+
+- :project:`ESP_Brookesia Phone <examples/esp32-p4-function-ev-board/examples/esp_brookesia_phone>` - 展示了一个类似安卓的界面，使用 ESP_Brookesia，利用开发板上的 MIPI-DSI、MIPI-CSI、ESP32-C6、SD 卡和音频接口运行多个应用程序，为高效的多媒体应用开发提供了基础。
+- :project:`LVGL Demo v8 <examples/esp32-p4-function-ev-board/examples/lvgl_demo_v8>` - 演示如何在配备 7 英寸 LCD 屏幕的 ESP32-P4-Function-EV-Board 上移植 LVGL v8，并使用 LVGL 的内置演示进行性能测试，为基于 LVGL v8 开发应用程序提供基础。
+- :project:`LVGL Demo v9 <examples/esp32-p4-function-ev-board/examples/lvgl_demo_v9>` - 演示如何在 ESP32-P4-Function-EV-Board 上移植 LVGL v9 并使用 LVGL 内置的演示进行性能测试，作为基于 LVGL v9 开发应用程序的基础。
+
+更多示例及最新更新请参阅 :project:`examples <examples/esp32-p4-function-ev-board>` 文件夹。
+
+如需尝试应用示例或开发自定义应用，请参照 `开始开发应用`_ 小节中的步骤进行操作。
+
 
 开始开发应用
 ------------
@@ -213,8 +235,6 @@ ESP32-P4-Function-EV-Board 的包装盒中包含以下可选配件：
 ^^^^^^^^
 
 请前往 `ESP-IDF 快速入门 <https://docs.espressif.com/projects/esp-idf/zh_CN/latest/esp32p4/get-started/index.html>`__，查看如何快速设置开发环境，将应用程序烧录至您的开发板。
-
-开发板应用示例存放在 :project:`Examples <examples/esp32-p4-function-ev-board/examples>` 中，在示例目录下输入 ``idf.py menuconfig`` 即可配置工程选项。
 
 硬件参考
 ========

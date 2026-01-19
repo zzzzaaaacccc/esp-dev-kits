@@ -131,6 +131,19 @@ ESP32-P4-EYE 是一款基于 ESP32-P4 芯片的视觉开发板，主要面向摄
    * - Camera
      - 分辨率为 200 万像素，可旋转摄像头进行手动聚焦。详细参数请参考 `摄像头规格书`_。
 
+
+应用示例
+--------
+
+以下为开发板的应用示例：
+
+- :project:`Factory Demo <examples/esp32-p4-eye/examples/factory_demo>` - 展示了一个基于 ESP32-P4-EYE 的全功能迷你相机方案。它不仅实现了拍照、定时拍照、录像、相册预览、USB SD 卡挂载和图像参数设置等基础相机功能，还集成了先进的 AI 视觉能力，包括面部检测、行人检测和基于 YOLOv11nano 模型的实时物体检测。
+
+更多示例及最新更新请参阅 :project:`examples <examples/esp32-p4-eye>` 文件夹。
+
+如需尝试应用示例或开发自定义应用，请参照 `应用程序开发`_ 小节中的步骤进行操作。
+
+
 应用程序开发
 ------------
 
@@ -162,8 +175,6 @@ ESP32-P4-EYE 是一款基于 ESP32-P4 芯片的视觉开发板，主要面向摄
 ^^^^^^^^
 
 请前往 `快速入门 <https://docs.espressif.com/projects/esp-idf/zh_CN/latest/esp32p4/get-started/index.html>`__ 中 `详细安装步骤 <https://docs.espressif.com/projects/esp-idf/zh_CN/latest/esp32p4/get-started/index.html#get-started-how-to-get-esp-idf>`__ 一节查看如何快速设置开发环境。
-
-开发板应用示例存放在 :project:`Examples <examples/esp32-p4-eye/examples>` 中。在示例目录下输入 ``idf.py menuconfig`` 即可配置工程选项。
 
 .. _Hardware-reference:
 

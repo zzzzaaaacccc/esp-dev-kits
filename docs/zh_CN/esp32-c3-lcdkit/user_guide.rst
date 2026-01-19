@@ -135,7 +135,19 @@ LCD 子板
 软件支持
 ----------------
 
-ESP32-C3-LCDkit 的开发框架为 `ESP-IDF <https://github.com/espressif/esp-idf>`_。ESP-IDF 是基于 FreeRTOS 的乐鑫 SoC 开发框架，具有众多组件，包括 LCD、ADC、RMT、SPI 等。开发板应用示例存放在 :project:`Examples <examples/esp32-c3-lcdkit/examples>` 中，在示例目录下输入 ``idf.py menuconfig`` 可以配置工程选项。
+ESP32-C3-LCDkit 的开发框架为 `ESP-IDF <https://github.com/espressif/esp-idf>`_。ESP-IDF 是基于 FreeRTOS 的乐鑫 SoC 开发框架，具有众多组件，包括 LCD、ADC、RMT、SPI 等。开发板应用示例存放在 :project:`Examples <examples/esp32-c3-lcdkit>` 中，在示例目录下输入 ``idf.py menuconfig`` 可以配置工程选项。
+
+
+应用示例
+--------
+
+以下为开发板的应用示例：
+
+- :project:`Knob Panel Example <examples/esp32-c3-lcdkit/examples/knob_panel>` - 演示了一个带有语音播放功能的旋钮面板的 GUI 演示，为使用 ESP32-C3-LCDkit 开发类似应用程序提供了参考。
+
+更多示例及最新更新请参阅 :project:`examples <examples/esp32-c3-lcdkit>` 文件夹。
+
+如需尝试应用示例或开发自定义应用，请参照 `应用程序开发`_ 小节中的步骤进行操作。
 
 
 应用程序开发

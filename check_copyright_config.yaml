@@ -31,10 +31,13 @@ examples_and_unit_tests:
    - 'esp32-s3-lcd-ev-board/examples/'
    - 'esp32-s3-lcd-ev-board/components/'
    - 'esp32-c3-lcdkit/examples/'
+   - 'examples/esp-sensairshuttle'
   allowed_licenses:
   - Apache-2.0
   - Unlicense
   - CC0-1.0
+  - BSD-3-Clause
+  - LicenseRef-Espressif-Modified-MIT
   license_for_new_files: CC0-1.0
 
 ignore:  # You can also select ignoring files here
@@ -44,3 +47,6 @@ ignore:  # You can also select ignoring files here
     - gui_music/
     - examples/esp-dualkey/components/qrcode/src/qrcodegen.h
     - examples/esp-dualkey/components/qrcode/src/qrcodegen.c
+    - examples/esp-sensairshuttle/examples/factory_demo/common_components/brookesia_app_compass/BMM350_SensorAPI/
+    - examples/esp-sensairshuttle/examples/factory_demo/common_components/brookesia_app_temperature/BME690_SensorAPI/
+    - examples/esp-sensairshuttle/examples/factory_demo/common_components/brookesia_app_temperature/bsec_IAQ/

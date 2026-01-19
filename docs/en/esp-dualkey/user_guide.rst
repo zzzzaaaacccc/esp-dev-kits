@@ -110,6 +110,19 @@ The key components of the board are described below. For user convenience, the c
      - Supports Deep-sleep mode for energy saving.
 
 
+Application Examples
+--------------------
+
+The following application examples are available for ESP-DualKey:
+
+- :project:`ESP-DualKey Smart Button Controller Example <examples/esp-dualkey/examples/factory_demo>` - Demonstrates the use of the ESP-DualKey development board as a smart button controller with smart home control, Bluetooth keyboard, and USB keyboard functionalities, allowing for mode switching through physical switches.
+- :project:`test_apps <examples/esp-dualkey/components/esp_hid/test_apps>` - Provides unit tests for the esp_hid component on ESP32 and ESP32-C3 chips, allowing developers to validate the functionality of their code and add new test cases as needed.
+
+For more examples and the latest updates, please refer to the :project:`examples <examples/esp-dualkey>` folder.
+
+To explore the application examples or to develop your own, please follow the steps outlined in the `Start Developing Applications`_ section.
+
+
 Start Developing Applications
 -----------------------------
 
@@ -145,8 +158,6 @@ Please proceed to `ESP-IDF Get Started <https://docs.espressif.com/projects/esp-
 
 Espressif provides Board Support Packages (BSPs) for various Espressif boards that help you initialize and use key onboard peripherals, such as LCD displays, audio chips, buttons, and LEDs, more easily and efficiently. For a complete list of supported boards, please visit `esp-bsp <https://github.com/espressif/esp-bsp>`__.
 
-Development board application examples are stored in the :project:`Examples <examples/esp-dualkey/examples>` folder.
-
 
 Hardware Reference
 ==================
@@ -166,7 +177,7 @@ The block diagram below shows the components of ESP-DualKey and their interconne
 
 
 Power Supply Options
-^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^
 
 There are two mutually exclusive ways to provide power to the board:
 
