@@ -24,8 +24,7 @@ static lv_obj_t *_btn_manage_habits = NULL;
 /* Static function forward declaration */
 static void _btn_cb(lv_obj_t *obj, lv_event_t event);
 
-void ui_habit_tracker_init(void *data)
-{
+void ui_habit_tracker_init(void *data) {
     ui_page_show("Habit Tracker");
     obj_page_habit = ui_page_get_obj();
 
@@ -57,8 +56,7 @@ void ui_habit_tracker_init(void *data)
     ui_habit_tracker_state = ui_state_show;
 }
 
-void ui_habit_tracker_show(void *data)
-{
+void ui_habit_tracker_show(void *data) {
     if (ui_state_dis == ui_habit_tracker_state) {
         ui_habit_tracker_init(data);
         ui_today_view_show();
@@ -72,24 +70,20 @@ void ui_habit_tracker_show(void *data)
     }
 }
 
-void ui_habit_tracker_hide(void *data)
-{
+void ui_habit_tracker_hide(void *data) {
     if (ui_state_show == ui_habit_tracker_state) {
         lv_obj_set_hidden(_btn_today, true);
         lv_obj_set_hidden(_btn_statistics, true);
         lv_obj_set_hidden(_btn_manage_habits, true);
-        
         ui_manage_habits_hide();
         ui_today_view_hide();
         ui_habit_tracker_statistics_hide();
-        
         ui_page_hide(NULL);
         ui_habit_tracker_state = ui_state_hide;
     }
 }
 
-static void _btn_cb(lv_obj_t *obj, lv_event_t event)
-{
+static void _btn_cb(lv_obj_t *obj, lv_event_t event) {
     if (LV_EVENT_CLICKED == event) {
         if (obj == _btn_today) {
             ui_manage_habits_hide();

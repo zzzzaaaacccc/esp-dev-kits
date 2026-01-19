@@ -339,25 +339,49 @@ void ui_show(ui_func_desc_t *ui, ui_show_mode_t mode)
 {
     static ui_func_desc_t ui_now;
 
+    const char *mode_str = "UNKNOWN";
+    switch (mode) {
+    case UI_SHOW_OVERRIDE: mode_str = "OVERRIDE"; break;
+    case UI_SHOW_PEDDING: mode_str = "PEDDING"; break;
+    case UI_SHOW_BACKPORT: mode_str = "BACKPORT"; break;
+    }
+
+    ESP_LOGI(TAG, "ui_show enter: mode=%s, stack_index=%u, target=%s",
+             mode_str,
+             (unsigned)call_stack_index,
+             ui ? ui->name : "(null)");
+
     switch (mode) {
     case UI_SHOW_OVERRIDE:
         ui_call_stack_pop(&ui_now);
+        ESP_LOGI(TAG, "ui_show OVERRIDE: hide=%s -> show=%s", ui_now.name, ui->name);
         ui_now.hide(NULL);
+        ESP_LOGI(TAG, "ui_show OVERRIDE: hide done");
         ui->show(NULL);
+        ESP_LOGI(TAG, "ui_show OVERRIDE: show done");
         ui_call_stack_clear();
         ui_call_stack_push(ui);
         break;
     case UI_SHOW_PEDDING:
         ui_call_stack_peek(&ui_now);
+        ESP_LOGI(TAG, "ui_show PEDDING: hide=%s -> show=%s", ui_now.name, ui->name);
         ui_now.hide(NULL);
+        ESP_LOGI(TAG, "ui_show PEDDING: hide done");
         ui->show(NULL);
+        ESP_LOGI(TAG, "ui_show PEDDING: show done");
         ui_call_stack_push(ui);
         break;
     case UI_SHOW_BACKPORT:
         ui_call_stack_pop(&ui_now);
+        ESP_LOGI(TAG, "ui_show BACKPORT: hide=%s", ui_now.name);
         ui_now.hide(NULL);
+        ESP_LOGI(TAG, "ui_show BACKPORT: hide done");
         ui_call_stack_peek(&ui_now);
+        ESP_LOGI(TAG, "ui_show BACKPORT: show=%s", ui_now.name);
         ui_now.show(NULL);
+        ESP_LOGI(TAG, "ui_show BACKPORT: show done");
         break;
     }
+
+    ESP_LOGI(TAG, "ui_show exit: mode=%s, stack_index=%u", mode_str, (unsigned)call_stack_index);
 }

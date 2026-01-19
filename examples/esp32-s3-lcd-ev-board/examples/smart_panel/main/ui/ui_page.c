@@ -5,6 +5,9 @@
  */
 
 #include "ui_main.h"
+#include "esp_log.h"
+
+static const char *TAG = "UI_PAGE";
 
 ui_func_desc_t ui_page_func = {
     .name = "Page",
@@ -17,6 +20,9 @@ static lv_obj_t *page = NULL;
 static lv_obj_t *label_tittle = NULL;
 
 static void btn_back_cb(lv_obj_t *obj, lv_event_t event);
+static void btn_back_task_cb(lv_task_t *task);
+static lv_task_t *btn_back_task = NULL;
+static bool btn_back_inflight = false;
 
 void ui_page_init(void *data)
 {
@@ -87,6 +93,32 @@ lv_obj_t *ui_page_get_obj(void)
 static void btn_back_cb(lv_obj_t *obj, lv_event_t event)
 {
     if (LV_EVENT_CLICKED == event) {
-        ui_show(NULL, UI_SHOW_BACKPORT);
+        ESP_LOGI(TAG, "Back clicked (inflight=%d)", (int)btn_back_inflight);
+        if (btn_back_inflight) {
+            return;
+        }
+        btn_back_inflight = true;
+
+        // Avoid doing UI stack changes directly inside an LVGL event callback.
+        // Some screens do heavy work on hide/show and can cause reentrancy issues.
+        if (btn_back_task) {
+            lv_task_del(btn_back_task);
+            btn_back_task = NULL;
+        }
+        btn_back_task = lv_task_create(btn_back_task_cb, 1, LV_TASK_PRIO_HIGH, NULL);
     }
+}
+
+static void btn_back_task_cb(lv_task_t *task)
+{
+    (void)task;
+    if (btn_back_task) {
+        lv_task_del(btn_back_task);
+        btn_back_task = NULL;
+    }
+
+    ESP_LOGI(TAG, "Back task running -> ui_show(UI_SHOW_BACKPORT)");
+    ui_show(NULL, UI_SHOW_BACKPORT);
+    ESP_LOGI(TAG, "Back task done");
+    btn_back_inflight = false;
 }

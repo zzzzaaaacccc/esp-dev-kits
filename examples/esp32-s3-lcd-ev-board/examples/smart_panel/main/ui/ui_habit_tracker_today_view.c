@@ -6,6 +6,7 @@
 #include <string.h>
 #include <time.h>
 #include <stdlib.h>
+#include "app_notification.h"
 
 /* LVGL objects */
 static lv_obj_t *today_container = NULL;
@@ -29,8 +30,7 @@ typedef struct {
 } habit_item_t;
 
 
-void ui_today_view_init(void)
-{
+void ui_today_view_init(void) {
     lv_obj_t *obj_page = ui_page_get_obj();
     // need to get data from cloud/database - load today's habit completion status
     max_habits = 10;
@@ -41,7 +41,9 @@ void ui_today_view_init(void)
         }
     }
     
-    // cont
+    app_notification_init();
+    ui_today_view_schedule_habit_notifications();
+
     today_container = lv_obj_create(obj_page, NULL);
     lv_obj_set_size(today_container, 520, 300);
     lv_obj_align(today_container, NULL, LV_ALIGN_IN_RIGHT_MID, -40, 30);
@@ -52,48 +54,52 @@ void ui_today_view_init(void)
     lv_obj_align(title, NULL, LV_ALIGN_IN_TOP_MID, 0, 10);
     lv_obj_set_style_local_text_font(title, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &font_en_bold_20);
     
-    // scrollable list -> vertical stacking
     today_list = lv_list_create(today_container, NULL);
     lv_obj_set_size(today_list, 480, 250);
     lv_obj_align(today_list, title, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
     lv_list_set_scrollbar_mode(today_list, LV_SCROLLBAR_MODE_AUTO);
 }
 
-void ui_today_view_show(void)
-{
+void ui_today_view_show(void) {
     if (today_container) {
+        static uint32_t last_day = 0;
+        
+        time_t now = time(NULL);
+        struct tm timeinfo;
+        localtime_r(&now, &timeinfo);
+        
+        if (timeinfo.tm_mday != last_day) {
+            last_day = timeinfo.tm_mday;
+            app_notification_reset_daily_state();
+            ui_today_view_update_notifications();
+        }
+        
         lv_obj_set_hidden(today_container, false);
         refresh_today_list();
     }
 }
 
-void ui_today_view_hide(void)
-{
+void ui_today_view_hide(void) {
     if (today_container) {
         lv_obj_set_hidden(today_container, true);
     }
 }
 
-void ui_today_view_refresh(void)
-{
+void ui_today_view_refresh(void) {
     refresh_today_list();
 }
 
-
-// get current day of week (0=mon, 6=sun)
-static int get_current_day_of_week(void)
-{
+static int get_current_day_of_week(void) {
     time_t now = time(NULL);
     struct tm *tm_info = localtime(&now);
     int day = tm_info->tm_wday;
-    return (day == 0) ? 6 : day - 1;
+    return (day == 0) ? 6 : day - 1; // (0=mon, 6=sun)
 }
 
-// check if habit is scheduled for tdy
-static bool is_habit_scheduled_today(const habit_t *habit, int day_of_week)
-{
-    if (!habit->is_active) return false;
-    
+static bool is_habit_scheduled_today(const habit_t *habit, int day_of_week) {
+    if (!habit->is_active) {
+        return false;
+    }
     if (habit->frequency_type == 0) {
         // Weekly: check if today's day is selected
         return habit->days_selected[day_of_week];
@@ -101,13 +107,10 @@ static bool is_habit_scheduled_today(const habit_t *habit, int day_of_week)
         // Custom: check if today's date matches any custom date
         return false;
     }
-    
     return false;
 }
 
-// get time value for sorting (in min since midnight, -1 for "anytime")
-static int get_habit_time_value(const habit_t *habit)
-{
+static int get_habit_time_value(const habit_t *habit) {
     switch (habit->time_option) {
         case 0: return -1;  // anytime
         case 1: return habit->hour * 60 + habit->minute;  // specific time
@@ -119,8 +122,7 @@ static int get_habit_time_value(const habit_t *habit)
 }
 
 // qsort
-static int compare_habits_by_time(const void *a, const void *b)
-{
+static int compare_habits_by_time(const void *a, const void *b) {
     const habit_item_t *habit_a = (const habit_item_t *)a;
     const habit_item_t *habit_b = (const habit_item_t *)b;
     
@@ -144,8 +146,7 @@ static int compare_habits_by_time(const void *a, const void *b)
 }
 
 // time string for display
-static void get_time_string(const habit_t *habit, char *buffer, size_t size)
-{
+static void get_time_string(const habit_t *habit, char *buffer, size_t size) {
     switch (habit->time_option) {
         case 0: snprintf(buffer, size, "Anytime"); break;
         case 1: snprintf(buffer, size, "%02d:%02d", habit->hour, habit->minute); break;
@@ -157,13 +158,11 @@ static void get_time_string(const habit_t *habit, char *buffer, size_t size)
 }
 
 // checkbox callback
-static void checkbox_event_cb(lv_obj_t *obj, lv_event_t event)
-{
+static void checkbox_event_cb(lv_obj_t *obj, lv_event_t event) {
     if (event == LV_EVENT_VALUE_CHANGED) {
         uint16_t habit_idx = (uint16_t)(uintptr_t)lv_obj_get_user_data(obj);
         bool checked = lv_checkbox_is_checked(obj);
         
-        // enough space to track habit
         if (habit_idx >= max_habits) {
             uint16_t new_max = habit_idx + 10;
             bool *new_completed = (bool *)realloc(habit_completed, new_max * sizeof(bool));
@@ -181,25 +180,28 @@ static void checkbox_event_cb(lv_obj_t *obj, lv_event_t event)
             habit_completed[habit_idx] = checked;
         }
         
-        // mark habit as completed/uncompleted (updates last_completed_date and streak)
+        if (checked) {
+            habit_t *habit = ui_manage_habits_get_habit(habit_idx);
+            if (habit) {
+                char msg[100];
+                snprintf(msg, sizeof(msg), "Great job! Streak: %d days", habit->streak_count + 1);
+                app_notification_send_simple(habit->name, msg, NOTIFICATION_TYPE_SUCCESS);
+            }
+        }
+
         // need to store in cloud/database - sync habit completion status immediately after marking
         ui_manage_habits_mark_completed(habit_idx, checked);
-
-        // refresh entire list to move completed habits to bottom
         refresh_today_list();
-        
-        // refresh statistics view if it's visible
         ui_habit_tracker_statistics_refresh();
     }
 }
 
 // refresh tdy's hbait list
-static void refresh_today_list(void)
-{
-    if (!today_list) return;
-    
+static void refresh_today_list(void) {
+    if (!today_list) {
+        return;
+    }
     lv_list_clean(today_list);
-    
     int current_day = get_current_day_of_week();
     
     uint16_t total_habits = 0;
@@ -217,7 +219,9 @@ static void refresh_today_list(void)
     habit_item_t *today_habits = malloc(sizeof(habit_item_t) * total_habits);
     uint16_t today_count = 0;
     
-    if (!today_habits) return;
+    if (!today_habits) {
+        return;
+    }
     
     // all habits scheduled for today
     for (uint16_t i = 0; i < total_habits; i++) {
@@ -309,4 +313,35 @@ static void refresh_today_list(void)
         lv_obj_set_style_local_text_color(btn, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_GRAY);
     }
 }
+
+void ui_today_view_schedule_habit_notifications(void) {
+    int current_day = get_current_day_of_week();
+    
+    for (uint16_t i = 0; i < 100; i++) {
+        habit_t *habit = ui_manage_habits_get_habit(i);
+        if (habit == NULL) break;
+        
+        if (!is_habit_scheduled_today(habit, current_day)) {
+            continue;
+        }
+        
+        if (habit->time_option == 1) {
+            app_notification_schedule_habit(habit->name, habit->hour, habit->minute);
+        } else if (habit->time_option == 2) {
+            app_notification_schedule_habit(habit->name, morn_hr, morn_min);
+        } else if (habit->time_option == 3) {
+            app_notification_schedule_habit(habit->name, afternoon_hr, afternoon_min);
+        } else if (habit->time_option == 4) {
+            app_notification_schedule_habit(habit->name, night_hr, night_min);
+        }
+    }
+    
+    app_notification_check_missed_reminders();
+}
+
+void ui_today_view_update_notifications(void) {
+    app_notification_reset_daily_state();
+    ui_today_view_schedule_habit_notifications();
+}
+
 

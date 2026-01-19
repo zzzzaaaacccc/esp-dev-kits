@@ -5,8 +5,6 @@
 #include "lvgl.h"
 #include "ui_keyboard.h"
 #include "ui_pomodoro_analytics.h"
-#include "ui_pomodoro_break_activities.h"
-#include "ui_pomodoro_task_list.h"
 #include "audio_player.h"
 #include <math.h>
 #include <stdlib.h>
@@ -19,11 +17,12 @@ ui_func_desc_t ui_pomodoro_timer_func = {
     .hide = ui_pomodoro_timer_hide,
 };
 
+// internal state
 static ui_state_t ui_pomodoro_state = ui_state_dis;
 static lv_obj_t *obj_page_pomodoro = NULL;
 static lv_obj_t *_label_timer = NULL;
 static lv_obj_t *_label_state = NULL;
-static lv_obj_t *_label_session_tracker = NULL;
+static lv_obj_t *_label_session_tracker = NULL; // track sessions
 static lv_obj_t *_btn_start = NULL;
 static lv_obj_t *_btn_reset = NULL;
 static lv_obj_t *_btn_skip = NULL;
@@ -31,7 +30,6 @@ static lv_obj_t *_btn_extend = NULL;
 static lv_obj_t *main_cont = NULL;
 static lv_obj_t *left_panel = NULL;
 static lv_obj_t *right_panel = NULL;
-static lv_obj_t *content_area = NULL;
 static lv_obj_t *mode_cont = NULL;
 static lv_obj_t *btn_cont = NULL;
 static lv_obj_t *input_cont = NULL;
@@ -45,13 +43,8 @@ static lv_obj_t *_roller_minutes_extend = NULL;
 static lv_obj_t *_roller_seconds_extend = NULL;
 // keyboard
 static lv_obj_t *_keyboard = NULL;
-// tab UI
-static lv_obj_t *_tab_container = NULL;
-static lv_obj_t *_task_list_tab = NULL;
-static lv_obj_t *_break_tab = NULL;
-static lv_obj_t *_stats_tab = NULL;
-static lv_obj_t *_break_main_menu_cont = NULL;
-static lv_obj_t *_break_content_cont = NULL;
+// analytics 
+static lv_obj_t *_btn_analytics = NULL;
 
 static bool timer_running = false;
 typedef enum {
@@ -61,18 +54,6 @@ typedef enum {
 } timer_mode_t;
 static timer_mode_t current_mode = MODE_FOCUS; 
 static int remaining_time = 0; 
-
-typedef enum {
-    TAB_TASK,
-    TAB_BREAK,
-    TAB_STATS
-} right_panel_tab_t;
-static right_panel_tab_t current_tab = TAB_TASK;
-
-// Deferred scroll reset (layout/fit can adjust scroll after we show/hide content)
-static lv_task_t *_scroll_reset_task = NULL;
-static void _scroll_reset_task_cb(lv_task_t *task);
-static void _schedule_scroll_reset(void);
 
 // need to store in cloud/database -> completed_pomodoros, current_session and session history
 static int completed_pomodoros = 0; 
@@ -93,6 +74,11 @@ static lv_obj_t *_btn_mode_focus = NULL;
 static lv_obj_t *_btn_mode_short = NULL;
 static lv_obj_t *_btn_mode_long = NULL;
 
+// to-do list/tasks
+static lv_obj_t *_textarea_task = NULL;
+static lv_obj_t *_btn_add_task = NULL;
+static lv_obj_t *_task_list = NULL;
+
 // volume control
 static lv_obj_t *_slider_volume = NULL;
 static int current_volume = 70;
@@ -101,7 +87,8 @@ static int current_volume = 70;
 static FILE *current_music_fp = NULL;
 static bool music_is_playing = false;  
 static bool music_is_paused = false;  
-static char focus_music_file_path[128] = "";
+static char currently_playing_path[128] = ""; 
+static char focus_music_file_path[128] = "";      
 static char short_break_music_file_path[128] = "";
 static char long_break_music_file_path[128] = "";
 static int music_file_count = 0;   
@@ -113,6 +100,10 @@ typedef struct {
     int file_index;         // which file is playing for this mode
     int elapsed_ms;         // how many ms have elapsed
 } music_state_t;
+
+static music_state_t focus_music_state = {-1, 0};
+static music_state_t short_break_music_state = {-1, 0};
+static music_state_t long_break_music_state = {-1, 0};
 
 /* Forward declarations */
 static void _btn_start_cb(lv_obj_t *obj, lv_event_t event);
@@ -126,7 +117,8 @@ static void _extend_picker_cancel_cb(lv_obj_t *obj, lv_event_t event);
 static void _update_timer_display(void);
 static void _pomodoro_tick(void *arg);
 static void _ui_update_task_cb(lv_task_t *task); 
-static void _btn_mode_cb(lv_obj_t *obj, lv_event_t event);
+static void _btn_add_task_cb(lv_obj_t *obj, lv_event_t event); 
+static void _checkbox_event_cb(lv_obj_t *obj, lv_event_t event);
 static void _btn_mode_cb(lv_obj_t *obj, lv_event_t event);
 static void _update_mode_buttons(void);
 static void _set_timer_mode(timer_mode_t mode);
@@ -140,6 +132,8 @@ static void _hide_time_picker(void);
 static void _time_picker_confirm_cb(lv_obj_t *obj, lv_event_t event);
 static void _time_picker_cancel_cb(lv_obj_t *obj, lv_event_t event);
 static void _timer_label_click_cb(lv_obj_t *obj, lv_event_t event);
+// keyboard
+static void _textarea_focus_cb(lv_obj_t *obj, lv_event_t event);
 // settings 
 static int focus_sessions_before_long_break = 2;
 static int temp_sessions_count = 4;
@@ -172,7 +166,8 @@ static lv_obj_t *_dropdown_short_music = NULL;
 static lv_obj_t *_dropdown_long_music = NULL;
 
 // music dropdown
-static char* _build_music_options(void) {
+static char* _build_music_options(void)
+{
     static char options[512] = "";
     options[0] = '\0';
     music_file_count = 0;
@@ -218,102 +213,19 @@ static char* _build_music_options(void) {
         strcat(options, "\n");
     }
     strcat(options, "None");
+    
     return options;
 }
 
-static void _scroll_content_to_top(void) {
-    if (!content_area) {
-        return;
-    }
+// analytics
+static void _btn_analytics_cb(lv_obj_t *obj, lv_event_t event);
 
-    lv_obj_t *scrl = lv_page_get_scrl(content_area);
-    if (!scrl) {
-        return;
-    }
-
-    lv_coord_t y = lv_obj_get_y(scrl);
-    if (y != 0) {
-        lv_page_scroll_ver(content_area, (lv_coord_t)(-y));
-    }
-    // Extra safety to guarantee the exact top position.
-    lv_obj_set_y(scrl, 0);
-}
-
-static void _scroll_reset_task_cb(lv_task_t *task) {
-    (void)task;
-    _scroll_content_to_top();
-    if (_scroll_reset_task) {
-        lv_task_del(_scroll_reset_task);
-        _scroll_reset_task = NULL;
-    }
-}
-
-static void _schedule_scroll_reset(void) {
-    if (_scroll_reset_task) {
-        lv_task_del(_scroll_reset_task);
-        _scroll_reset_task = NULL;
-    }
-    _scroll_reset_task = lv_task_create(_scroll_reset_task_cb, 1, LV_TASK_PRIO_HIGH, NULL);
-}
-
-static void _break_tab_cb(lv_obj_t *obj, lv_event_t event) {
-    if (event == LV_EVENT_CLICKED) {
-        current_tab = TAB_BREAK;
-        ui_task_list_hide();
-        ui_pomodoro_analytics_hide(NULL);
-        if (input_cont) {
-            lv_obj_set_hidden(input_cont, true);
-        }
-        ui_break_activities_show_menu();
-        lv_obj_set_style_local_border_width(_break_tab, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, 2);
-        lv_obj_set_style_local_border_color(_break_tab, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_BLACK);
-        lv_obj_set_style_local_border_width(_task_list_tab, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, 0);
-        lv_obj_set_style_local_border_width(_stats_tab, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, 0);
-
-        _schedule_scroll_reset();
-    }
-}
-
-static void _task_list_tab_cb(lv_obj_t *obj, lv_event_t event) {
-    if (event == LV_EVENT_CLICKED) {
-        current_tab = TAB_TASK;
-        ui_break_activities_hide_menu();
-        ui_pomodoro_analytics_hide(NULL);
-        ui_task_list_show();
-        if (input_cont) {
-            lv_obj_set_hidden(input_cont, false);
-        }
-        lv_obj_set_style_local_border_width(_task_list_tab, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, 2);
-        lv_obj_set_style_local_border_color(_task_list_tab, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_BLACK);
-        lv_obj_set_style_local_border_width(_break_tab, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, 0);
-        lv_obj_set_style_local_border_width(_stats_tab, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, 0);
-
-        _schedule_scroll_reset();
-    }
-}
-
-static void _stats_tab_cb(lv_obj_t *obj, lv_event_t event) {
-    if (event == LV_EVENT_CLICKED) {
-        current_tab = TAB_STATS;
-        ui_task_list_hide();
-        ui_break_activities_hide_menu();
-        if (input_cont) {
-            lv_obj_set_hidden(input_cont, true);
-        }
-        ui_pomodoro_analytics_show(NULL);
-        lv_obj_set_style_local_border_width(_stats_tab, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, 2);
-        lv_obj_set_style_local_border_color(_stats_tab, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_BLACK);
-        lv_obj_set_style_local_border_width(_task_list_tab, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, 0);
-        lv_obj_set_style_local_border_width(_break_tab, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, 0);
-
-        _schedule_scroll_reset();
-    }
-}
-
-void ui_pomodoro_timer_init(void *data) {
+void ui_pomodoro_timer_init(void *data)
+{
     ui_page_show("Pomodoro Timer");
     obj_page_pomodoro = ui_page_get_obj();
 
+    // main horizontal cont
     main_cont = lv_cont_create(obj_page_pomodoro, NULL);
     lv_obj_set_size(main_cont, lv_obj_get_width(obj_page_pomodoro), lv_obj_get_height(obj_page_pomodoro)-70);
     lv_obj_align(main_cont, NULL, LV_ALIGN_IN_BOTTOM_MID, 0, 0);
@@ -321,6 +233,7 @@ void ui_pomodoro_timer_init(void *data) {
     lv_obj_set_style_local_pad_all(main_cont, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 10);
     lv_obj_align(main_cont, NULL, LV_ALIGN_IN_BOTTOM_MID, 0, 0);
 
+    // left panel for pomodoro timer
     left_panel = lv_cont_create(main_cont, NULL);
     lv_obj_set_size(left_panel, lv_obj_get_width(obj_page_pomodoro) / 2 - 15, lv_obj_get_height(obj_page_pomodoro) - 90);
     lv_cont_set_layout(left_panel, LV_LAYOUT_COLUMN_MID);
@@ -329,23 +242,27 @@ void ui_pomodoro_timer_init(void *data) {
     lv_obj_set_style_local_pad_bottom(left_panel, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 5);
     lv_obj_set_style_local_pad_inner(left_panel, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 5);
 
+    // mode selection container
     mode_cont = lv_cont_create(left_panel, NULL);
     lv_obj_set_size(mode_cont, lv_obj_get_width(left_panel) - 20, 50);
     lv_cont_set_layout(mode_cont, LV_LAYOUT_ROW_MID);
     lv_obj_set_style_local_pad_inner(mode_cont, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 5);
 
+    // focus mode button
     _btn_mode_focus = lv_btn_create(mode_cont, NULL);
     lv_obj_set_size(_btn_mode_focus, 85, 40);
     lv_obj_set_event_cb(_btn_mode_focus, _btn_mode_cb);
     lv_obj_set_style_local_value_str(_btn_mode_focus, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "Focus");
     lv_obj_set_user_data(_btn_mode_focus, (void*)MODE_FOCUS);
 
+    // short break button
     _btn_mode_short = lv_btn_create(mode_cont, NULL);
     lv_obj_set_size(_btn_mode_short, 85, 40);
     lv_obj_set_event_cb(_btn_mode_short, _btn_mode_cb);
     lv_obj_set_style_local_value_str(_btn_mode_short, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "Short");
     lv_obj_set_user_data(_btn_mode_short, (void*)MODE_SHORT_BREAK);
 
+    // long break buton
     _btn_mode_long = lv_btn_create(mode_cont, NULL);
     lv_obj_set_size(_btn_mode_long, 85, 40);
     lv_obj_set_event_cb(_btn_mode_long, _btn_mode_cb);
@@ -360,12 +277,14 @@ void ui_pomodoro_timer_init(void *data) {
 
     _update_mode_buttons();
 
+    // timer label
     _label_timer = lv_label_create(left_panel, NULL);
     lv_obj_set_style_local_text_font(_label_timer, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &font_en_48);
     lv_obj_set_click(_label_timer, true); // make it clickable
     lv_obj_set_event_cb(_label_timer, _timer_label_click_cb);
     lv_obj_align(_label_timer, NULL, LV_ALIGN_CENTER, 0, -20);
 
+    // sess label
     _label_state = lv_label_create(left_panel, NULL);
     lv_obj_set_style_local_text_font(_label_state, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &font_en_24);
     lv_obj_align(_label_state, _label_timer, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
@@ -381,28 +300,28 @@ void ui_pomodoro_timer_init(void *data) {
 
     // reset button 
     _btn_reset = lv_btn_create(btn_cont, NULL);
-    lv_obj_set_size(_btn_reset, 65, 65);
+    lv_obj_set_size(_btn_reset, 55, 55);
     lv_obj_set_event_cb(_btn_reset, _btn_reset_cb);
     lv_obj_set_style_local_radius(_btn_reset, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_RADIUS_CIRCLE);
     lv_obj_set_style_local_value_str(_btn_reset, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "Reset");
 
     // start/pause button
     _btn_start = lv_btn_create(btn_cont, NULL);
-    lv_obj_set_size(_btn_start, 65, 65);
+    lv_obj_set_size(_btn_start, 55, 55);
     lv_obj_set_event_cb(_btn_start, _btn_start_cb);
     lv_obj_set_style_local_radius(_btn_start, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_RADIUS_CIRCLE);
     lv_obj_set_style_local_value_str(_btn_start, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "Start");
 
     // extend button
     _btn_extend = lv_btn_create(btn_cont, NULL);
-    lv_obj_set_size(_btn_extend, 65, 65);
+    lv_obj_set_size(_btn_extend, 55, 55);
     lv_obj_set_event_cb(_btn_extend, _btn_extend_cb);
     lv_obj_set_style_local_radius(_btn_extend, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_RADIUS_CIRCLE);
     lv_obj_set_style_local_value_str(_btn_extend, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "Extend");
 
     // skip button
     _btn_skip = lv_btn_create(btn_cont, NULL);
-    lv_obj_set_size(_btn_skip, 65, 65);
+    lv_obj_set_size(_btn_skip, 55, 55);
     lv_obj_set_event_cb(_btn_skip, _btn_skip_cb);
     lv_obj_set_style_local_radius(_btn_skip, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_RADIUS_CIRCLE);
     lv_obj_set_style_local_value_str(_btn_skip, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "Skip");
@@ -418,90 +337,54 @@ void ui_pomodoro_timer_init(void *data) {
 
     ui_pomodoro_state = ui_state_show;
     remaining_time = custom_focus_time;
-    _update_timer_display();
+    _update_timer_display();  // Update display to show correct time
     _update_session_tracker();
 
-    // right panel
+    // right panel for tasks
     right_panel = lv_cont_create(main_cont, NULL);
     lv_obj_set_size(right_panel, lv_obj_get_width(obj_page_pomodoro) / 2 - 15, lv_obj_get_height(obj_page_pomodoro) - 90);
-    lv_cont_set_layout(right_panel, LV_LAYOUT_COLUMN_MID);  // column layout
+    lv_cont_set_layout(right_panel, LV_LAYOUT_COLUMN_MID);
     lv_obj_set_style_local_bg_color(right_panel, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(250, 250, 250));
-    lv_obj_set_style_local_pad_all(right_panel, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 2); 
 
-    // tab container
-    _tab_container = lv_cont_create(right_panel, NULL);
-    lv_obj_set_size(_tab_container, lv_obj_get_width(right_panel), 33);
-    lv_cont_set_layout(_tab_container, LV_LAYOUT_OFF);
-    lv_obj_set_style_local_pad_all(_tab_container, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
-    lv_obj_set_style_local_bg_color(_tab_container, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(220, 220, 220));
-    lv_obj_set_style_local_border_width(_tab_container, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
+    // task input cont
+    input_cont = lv_cont_create(right_panel, NULL);
+    lv_obj_set_size(input_cont, lv_obj_get_width(right_panel) - 20, 50);
+    lv_cont_set_layout(input_cont, LV_LAYOUT_ROW_MID);
+    lv_obj_set_style_local_pad_inner(input_cont, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 5);
+    lv_obj_set_style_local_border_width(input_cont, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
+    lv_obj_set_style_local_bg_opa(input_cont, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_OPA_TRANSP);
 
-    // task tab
-    _task_list_tab = lv_btn_create(_tab_container, NULL);
-    lv_obj_set_size(_task_list_tab, 70, 33);
-    lv_obj_align(_task_list_tab, _tab_container, LV_ALIGN_IN_TOP_LEFT, 2, 0);
-    lv_obj_set_event_cb(_task_list_tab, _task_list_tab_cb);
-    lv_obj_set_style_local_bg_color(_task_list_tab, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(200, 220, 240));
-    lv_obj_set_style_local_border_width(_task_list_tab, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, 2);
-    lv_obj_set_style_local_border_color(_task_list_tab, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_BLACK);
-    lv_obj_set_style_local_radius(_task_list_tab, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, 5);
-    lv_obj_set_style_local_pad_all(_task_list_tab, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, 0);
+    // task input field
+    _textarea_task = lv_textarea_create(input_cont, NULL);
+    lv_obj_set_size(_textarea_task, lv_obj_get_width(right_panel) - 130, 40);
+    lv_textarea_set_placeholder_text(_textarea_task, "Enter task...");
+    lv_textarea_set_text(_textarea_task, "");
+    lv_obj_set_event_cb(_textarea_task, _textarea_focus_cb);
 
-    lv_obj_t *task_label = lv_label_create(_task_list_tab, NULL);
-    lv_label_set_text(task_label, "Task");
-    lv_obj_set_style_local_text_font(task_label, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &font_en_18);
+    // add task button
+    _btn_add_task = lv_btn_create(input_cont, NULL);
+    lv_obj_set_size(_btn_add_task, 80, 40);
+    lv_obj_set_event_cb(_btn_add_task, _btn_add_task_cb);
+    lv_obj_set_style_local_value_str(_btn_add_task, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "Add");
 
-    // break tab
-    _break_tab = lv_btn_create(_tab_container, NULL);
-    lv_obj_set_size(_break_tab, 70, 33);
-    lv_obj_align(_break_tab, _task_list_tab, LV_ALIGN_OUT_RIGHT_MID, 0, 0);
-    lv_obj_set_event_cb(_break_tab, _break_tab_cb);
-    lv_obj_set_style_local_bg_color(_break_tab, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(180, 200, 240));
-    lv_obj_set_style_local_border_width(_break_tab, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, 0);
-    lv_obj_set_style_local_radius(_break_tab, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, 5);
-    lv_obj_set_style_local_pad_all(_break_tab, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, 0);
+    // task list cont
+    _task_list = lv_list_create(right_panel, NULL);
+    lv_obj_set_size(_task_list, lv_obj_get_width(right_panel)-20, lv_obj_get_height(right_panel)-120); // fits input field
+    lv_obj_set_drag_dir(_task_list, LV_DRAG_DIR_VER);
+    lv_list_set_scrollbar_mode(_task_list, LV_SCROLLBAR_MODE_AUTO); 
+    lv_obj_set_style_local_pad_all(_task_list, LV_LIST_PART_SCROLLABLE, LV_STATE_DEFAULT, 5);  
 
-    lv_obj_t *break_label = lv_label_create(_break_tab, NULL);
-    lv_label_set_text(break_label, "Break");
-    lv_obj_set_style_local_text_font(break_label, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &font_en_18);
-    lv_obj_set_hidden(_break_tab, true);
+    // analytics button on right_panel
+    _btn_analytics = lv_btn_create(right_panel, NULL);
+    lv_obj_set_size(_btn_analytics, 70, 20);
+    lv_obj_set_style_local_radius(_btn_analytics, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, 8);
+    lv_obj_set_style_local_bg_color(_btn_analytics, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(180, 167, 214));
+    lv_obj_t *label = lv_label_create(_btn_analytics, NULL);
+    lv_label_set_text(label, "Stats");
+    lv_obj_align(label, NULL, LV_ALIGN_CENTER, 0, 0);
 
-    // stats tab
-    _stats_tab = lv_btn_create(_tab_container, NULL);
-    lv_obj_set_size(_stats_tab, 70, 33);
-    lv_obj_align(_stats_tab, _break_tab, LV_ALIGN_OUT_RIGHT_MID, 0, 0);
-    lv_obj_set_event_cb(_stats_tab, _stats_tab_cb);
-    lv_obj_set_style_local_bg_color(_stats_tab, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(240, 200, 220));
-    lv_obj_set_style_local_border_width(_stats_tab, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, 0);
-    lv_obj_set_style_local_radius(_stats_tab, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, 5);
-    lv_obj_set_style_local_pad_all(_stats_tab, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, 0);
-
-    lv_obj_t *stats_label = lv_label_create(_stats_tab, NULL);
-    lv_label_set_text(stats_label, "Stats");
-    lv_obj_set_style_local_text_font(stats_label, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &font_en_18);
-    lv_obj_set_hidden(_stats_tab, true);
-
-    content_area = lv_page_create(right_panel, NULL);
-    lv_obj_set_size(content_area, lv_obj_get_width(right_panel), lv_obj_get_height(right_panel) - 33); 
-    lv_obj_align(content_area, _tab_container, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
-    lv_obj_set_style_local_bg_opa(content_area, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_OPA_TRANSP);
-    lv_obj_set_style_local_border_width(content_area, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, 0);
-    lv_obj_set_style_local_pad_left(content_area, LV_PAGE_PART_SCROLLABLE, LV_STATE_DEFAULT, 5);
-    lv_obj_set_style_local_pad_right(content_area, LV_PAGE_PART_SCROLLABLE, LV_STATE_DEFAULT, 5);
-    lv_obj_set_style_local_pad_bottom(content_area, LV_PAGE_PART_SCROLLABLE, LV_STATE_DEFAULT, 5);
-    lv_obj_set_style_local_pad_top(content_area, LV_PAGE_PART_SCROLLABLE, LV_STATE_DEFAULT, 0);
-    lv_page_set_scrollbar_mode(content_area, LV_SCROLLBAR_MODE_AUTO);
-    // Fix scrollable width to the page to eliminate horizontal scrolling
-    // Set scrollable to fit parent width, and let its height grow with content
-    lv_page_set_scrollable_fit2(content_area, LV_FIT_PARENT, LV_FIT_TIGHT);
-    lv_page_set_scrl_layout(content_area, LV_LAYOUT_OFF);
-    lv_obj_t *scrl = lv_page_get_scrl(content_area);
-    if (scrl) {
-        lv_obj_set_drag_dir(scrl, LV_DRAG_DIR_VER);
-    }
-    
-    lv_obj_set_style_local_bg_opa(content_area, LV_PAGE_PART_SCROLLABLE, LV_STATE_DEFAULT, LV_OPA_TRANSP);
-    lv_obj_set_style_local_pad_right(content_area, LV_PAGE_PART_SCROLLABLE, LV_STATE_DEFAULT, 2);
+    // event callback
+    lv_obj_set_event_cb(_btn_analytics, _btn_analytics_cb);
 
     // volume slider on left panel
     _slider_volume = lv_slider_create(left_panel, NULL);
@@ -517,57 +400,68 @@ void ui_pomodoro_timer_init(void *data) {
     lv_obj_set_style_local_value_align(_slider_volume, LV_SLIDER_PART_BG, LV_STATE_DEFAULT, LV_ALIGN_OUT_LEFT_MID);
     lv_obj_set_style_local_value_ofs_x(_slider_volume, LV_SLIDER_PART_BG, LV_STATE_DEFAULT, -20);
 
-    ui_task_list_init(content_area);
-    ui_break_activities_init(content_area);
-    ui_pomodoro_analytics_init_in_panel(content_area);
-    
-    // Call _set_timer_mode to properly initialize tab visibility based on current_mode
-    // This ensures Break and Stats tabs are hidden in focus mode and shown only in break modes
-    _set_timer_mode(current_mode);
 }
 
 
-void ui_pomodoro_timer_show(void *data) {
+void ui_pomodoro_timer_show(void *data)
+{
     if (ui_state_dis == ui_pomodoro_state)
         ui_pomodoro_timer_init(data);
-    else if (ui_state_hide == ui_pomodoro_state) {
-        ESP_LOGI("POMODORO", "ui_pomodoro_timer_show (from hide)");
+    else if (ui_state_hide == ui_pomodoro_state)
+    {
+        lv_obj_set_hidden(_btn_mode_focus, false);
+        lv_obj_set_hidden(_btn_mode_short, false);
+        lv_obj_set_hidden(_btn_mode_long, false);
+        lv_obj_set_hidden(_btn_settings, false);
+        lv_obj_set_hidden(_label_timer, false);
+        lv_obj_set_hidden(_label_state, false);
+        lv_obj_set_hidden(_btn_reset, false);
+        lv_obj_set_hidden(_btn_start, false);
+        lv_obj_set_hidden(_btn_skip, false);
+        lv_obj_set_hidden(_btn_extend, false);
+        lv_obj_set_hidden(_textarea_task, false);
+        lv_obj_set_hidden(_btn_add_task, false);
+        lv_obj_set_hidden(_task_list, false);
+        lv_obj_set_hidden(main_cont, false);
+        lv_obj_set_hidden(left_panel, false);
+        lv_obj_set_hidden(right_panel, false);
+        lv_obj_set_hidden(mode_cont, false);
+        lv_obj_set_hidden(btn_cont, false);
+        lv_obj_set_hidden(input_cont, false);
+        lv_obj_set_hidden(_btn_analytics, false); 
         ui_page_show("Pomodoro Timer");
-
-        // Unhide only the top-level container; children follow automatically.
-        // This keeps navigation fast and avoids LVGL stalls that can trip the WDT.
-        if (main_cont) {
-            lv_obj_set_hidden(main_cont, false);
-        }
-
-        if (ui_update_task == NULL) {
-            ui_update_task = lv_task_create(_ui_update_task_cb, 100, LV_TASK_PRIO_MID, NULL);
-        }
         ui_pomodoro_state = ui_state_show;
     }
 }
 
-void ui_pomodoro_timer_hide(void *data) {
-    if (ui_state_show == ui_pomodoro_state) {
-        ESP_LOGI("POMODORO", "ui_pomodoro_timer_hide");
+void ui_pomodoro_timer_hide(void *data)
+{
+    if (ui_state_show == ui_pomodoro_state)
+    {
         if (timer_running) {
             esp_timer_stop(pomodoro_timer);
             timer_running = false;
         }
-
-        if (ui_update_task) {
-            lv_task_del(ui_update_task);
-            ui_update_task = NULL;
-        }
-
-        _stop_music();
-
-        // Hide only the top-level container; children follow automatically.
-        // This avoids repeated invalidations/layout that can stall LVGL and trip the WDT.
-        if (main_cont) {
-            lv_obj_set_hidden(main_cont, true);
-        }
-
+        lv_obj_set_hidden(main_cont, true);
+        lv_obj_set_hidden(left_panel, true);
+        lv_obj_set_hidden(right_panel, true);
+        lv_obj_set_hidden(mode_cont, true);
+        lv_obj_set_hidden(btn_cont, true);
+        lv_obj_set_hidden(input_cont, true);
+        lv_obj_set_hidden(_btn_mode_focus, true);
+        lv_obj_set_hidden(_btn_mode_short, true);
+        lv_obj_set_hidden(_btn_mode_long, true);
+        lv_obj_set_hidden(_btn_settings, true);
+        lv_obj_set_hidden(_label_timer, true);
+        lv_obj_set_hidden(_label_state, true);
+        lv_obj_set_hidden(_btn_reset, true);
+        lv_obj_set_hidden(_btn_start, true);
+        lv_obj_set_hidden(_btn_skip, true);
+        lv_obj_set_hidden(_btn_extend, true);
+        lv_obj_set_hidden(_textarea_task, true);
+        lv_obj_set_hidden(_btn_add_task, true);
+        lv_obj_set_hidden(_task_list, true);
+        lv_obj_set_hidden(_btn_analytics, true); 
         if (_keyboard) {
             ui_keyboard_delete(_keyboard);
             _keyboard = NULL;
@@ -595,20 +489,6 @@ static void _btn_start_cb(lv_obj_t *obj, lv_event_t event){
                 // need to store in cloud/database - log session start timestamp and mode
                 current_session = 1;
                 _update_session_tracker();
-                
-                current_tab = TAB_TASK;
-                ui_task_list_show();
-                ui_break_activities_hide_menu();
-                ui_pomodoro_analytics_hide(NULL);
-                if (input_cont) {
-                    lv_obj_set_hidden(input_cont, false);
-                }
-                lv_obj_set_style_local_border_width(_task_list_tab, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, 2);
-                lv_obj_set_style_local_border_color(_task_list_tab, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_BLACK);
-                lv_obj_set_style_local_border_width(_break_tab, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, 0);
-                lv_obj_set_style_local_border_width(_stats_tab, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, 0);
-
-                _schedule_scroll_reset();
             }
             esp_timer_start_periodic(pomodoro_timer, 1000000); // 1s tick
             lv_obj_set_style_local_value_str(_btn_start, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "Pause");
@@ -630,14 +510,20 @@ static void _btn_start_cb(lv_obj_t *obj, lv_event_t event){
     }
 }
 
-static void _btn_reset_cb(lv_obj_t *obj, lv_event_t event) {
-    if (event == LV_EVENT_CLICKED) {
+static void _btn_reset_cb(lv_obj_t *obj, lv_event_t event)
+{
+    if (event == LV_EVENT_CLICKED)
+    {
         esp_timer_stop(pomodoro_timer);
         timer_running = false;
         current_mode = MODE_FOCUS;
         completed_pomodoros = 0;
         current_session = 0;
 
+        focus_music_state.elapsed_ms = 0;
+        short_break_music_state.elapsed_ms = 0;
+        long_break_music_state.elapsed_ms = 0;
+        
         _update_session_tracker();
         _set_timer_mode(current_mode);
         lv_obj_set_style_local_value_str(_btn_start, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "Start");
@@ -646,24 +532,30 @@ static void _btn_reset_cb(lv_obj_t *obj, lv_event_t event) {
     }
 }
 
-static void _btn_skip_cb(lv_obj_t *obj, lv_event_t event) {
-    if (event == LV_EVENT_CLICKED) {
-        if (current_mode == MODE_FOCUS) {
+static void _btn_skip_cb(lv_obj_t *obj, lv_event_t event)
+{   
+    if (event == LV_EVENT_CLICKED)
+    {
+        if (current_mode == MODE_FOCUS)
+        {
             completed_pomodoros++;
             // need to store in cloud/database - log session skipped with timestamp
-            current_session++;
+            current_session++; // +1 session on skip
             _update_session_tracker();
 
             // mode now = short/long break
-            if (completed_pomodoros >= focus_sessions_before_long_break) {
+            if (completed_pomodoros >= focus_sessions_before_long_break)
+            {
                 current_mode = MODE_LONG_BREAK;
                 completed_pomodoros = 0;
             }
-            else {
+            else
+            {
                 current_mode = MODE_SHORT_BREAK;
             }
         }
-        else if (current_mode == MODE_SHORT_BREAK || current_mode == MODE_LONG_BREAK) {
+        else if (current_mode == MODE_SHORT_BREAK || current_mode == MODE_LONG_BREAK)
+        {
             // skip break, go back to focus
             current_mode = MODE_FOCUS;
         }
@@ -678,25 +570,31 @@ static void _btn_skip_cb(lv_obj_t *obj, lv_event_t event) {
     }
 }
 
-static void _btn_extend_cb(lv_obj_t *obj, lv_event_t event) {
-    if (event == LV_EVENT_CLICKED) {
+static void _btn_extend_cb(lv_obj_t *obj, lv_event_t event)
+{
+    if (event == LV_EVENT_CLICKED)
+    {
         _show_extend_picker();
     }
 }
 
 // extend time picker popup
-static void _show_extend_picker(void) {
+static void _show_extend_picker(void)
+{
+    // background
     _extend_picker_popup = lv_obj_create(lv_scr_act(), NULL);
     lv_obj_set_size(_extend_picker_popup, LV_HOR_RES, LV_VER_RES);
     lv_obj_set_style_local_bg_opa(_extend_picker_popup, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_OPA_50);
     lv_obj_set_style_local_bg_color(_extend_picker_popup, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_BLACK);
 
+    // container
     lv_obj_t *popup_cont = lv_obj_create(_extend_picker_popup, NULL);
     lv_obj_set_size(popup_cont, 400, 300);
     lv_obj_align(popup_cont, NULL, LV_ALIGN_CENTER, 0, 0);
     lv_obj_set_style_local_bg_color(popup_cont, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
     lv_obj_set_style_local_radius(popup_cont, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, 10);
 
+    // close button 
     lv_obj_t *btn_close = lv_btn_create(popup_cont, NULL);
     lv_obj_set_size(btn_close, 40, 40);
     lv_obj_align(btn_close, NULL, LV_ALIGN_IN_TOP_LEFT, 10, 10);
@@ -705,6 +603,7 @@ static void _show_extend_picker(void) {
     lv_obj_set_style_local_radius(btn_close, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_RADIUS_CIRCLE);
     lv_obj_set_style_local_bg_color(btn_close, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(220, 220, 220));
 
+    // title 
     lv_obj_t *title_label = lv_label_create(popup_cont, NULL);
     lv_label_set_text(title_label, "Extend Time");
     lv_obj_set_style_local_text_font(title_label, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &font_en_24);
@@ -745,6 +644,7 @@ static void _show_extend_picker(void) {
     lv_label_set_text(sec_label, "sec");
     lv_obj_align(sec_label, _roller_seconds_extend, LV_ALIGN_OUT_RIGHT_MID, 5, 0);
 
+    // button container
     lv_obj_t *btn_cont_extend = lv_cont_create(popup_cont, NULL);
     lv_obj_set_size(btn_cont_extend, 280, 50);
     lv_cont_set_layout(btn_cont_extend, LV_LAYOUT_ROW_MID);
@@ -753,12 +653,14 @@ static void _show_extend_picker(void) {
     lv_obj_set_style_local_pad_inner(btn_cont_extend, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 10);
     lv_obj_align(btn_cont_extend, rollers_cont, LV_ALIGN_OUT_BOTTOM_MID, 0, 15);
 
+    // confirm button
     lv_obj_t *btn_confirm_extend = lv_btn_create(btn_cont_extend, NULL);
     lv_obj_set_size(btn_confirm_extend, 120, 45);
     lv_obj_set_event_cb(btn_confirm_extend, _extend_picker_confirm_cb);
     lv_obj_set_style_local_value_str(btn_confirm_extend, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "Confirm");
     lv_obj_set_style_local_bg_color(btn_confirm_extend, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(100, 180, 100));
 
+    // cancel button
     lv_obj_t *btn_cancel_extend = lv_btn_create(btn_cont_extend, NULL);
     lv_obj_set_size(btn_cancel_extend, 120, 45);
     lv_obj_set_event_cb(btn_cancel_extend, _extend_picker_cancel_cb);
@@ -766,8 +668,10 @@ static void _show_extend_picker(void) {
     lv_obj_set_style_local_bg_color(btn_cancel_extend, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(220, 220, 220));
 }
 
-static void _hide_extend_picker(void) {
-    if (_extend_picker_popup) {
+static void _hide_extend_picker(void)
+{
+    if (_extend_picker_popup)
+    {
         lv_obj_del(_extend_picker_popup);
         _extend_picker_popup = NULL;
         _roller_minutes_extend = NULL;
@@ -775,8 +679,10 @@ static void _hide_extend_picker(void) {
     }
 }
 
-static void _extend_picker_confirm_cb(lv_obj_t *obj, lv_event_t event) {
-    if (event == LV_EVENT_CLICKED) {
+static void _extend_picker_confirm_cb(lv_obj_t *obj, lv_event_t event)
+{
+    if (event == LV_EVENT_CLICKED)
+    {
         uint16_t minutes = lv_roller_get_selected(_roller_minutes_extend);
         uint16_t seconds = lv_roller_get_selected(_roller_seconds_extend);
         int extend_time = minutes * 60 + seconds;
@@ -786,17 +692,22 @@ static void _extend_picker_confirm_cb(lv_obj_t *obj, lv_event_t event) {
     }
 }
 
-static void _extend_picker_cancel_cb(lv_obj_t *obj, lv_event_t event) {
-    if (event == LV_EVENT_CLICKED) {
+static void _extend_picker_cancel_cb(lv_obj_t *obj, lv_event_t event)
+{
+    if (event == LV_EVENT_CLICKED)
+    {
         _hide_extend_picker();
     }
 }
 
 // mode button callback
-static void _btn_mode_cb(lv_obj_t *obj, lv_event_t event) {
-    if (event == LV_EVENT_CLICKED) {
+static void _btn_mode_cb(lv_obj_t *obj, lv_event_t event)
+{
+    if (event == LV_EVENT_CLICKED)
+    {
         timer_mode_t new_mode = (timer_mode_t)lv_obj_get_user_data(obj);
-        if (timer_running) {
+        if (timer_running)
+        {
             esp_timer_stop(pomodoro_timer);
             timer_running = false;
             lv_obj_set_style_local_value_str(_btn_start, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "Start");
@@ -809,7 +720,8 @@ static void _btn_mode_cb(lv_obj_t *obj, lv_event_t event) {
     }
 }
 
-static void _update_mode_buttons(void) {
+static void _update_mode_buttons(void)
+{
     lv_obj_set_style_local_bg_color(_btn_mode_focus, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
     lv_obj_set_style_local_bg_color(_btn_mode_short, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
     lv_obj_set_style_local_bg_color(_btn_mode_long, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
@@ -817,7 +729,8 @@ static void _update_mode_buttons(void) {
     lv_obj_t *active_btn = NULL;
     lv_color_t active_color = LV_COLOR_MAKE(173, 216, 230);
     
-    switch (current_mode) {
+    switch (current_mode)
+    {
         case MODE_FOCUS:
             active_btn = _btn_mode_focus;
             break;
@@ -828,7 +741,8 @@ static void _update_mode_buttons(void) {
             active_btn = _btn_mode_long;
             break;
     }
-    if (active_btn) {
+    if (active_btn)
+    {
         lv_obj_set_style_local_bg_color(active_btn, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, active_color);
     }
 }
@@ -837,63 +751,28 @@ static void _set_timer_mode(timer_mode_t mode){
     current_mode = mode;
     esp_timer_stop(pomodoro_timer);
 
-    switch (mode) {
+    switch (mode)
+    {
         case MODE_FOCUS:
             remaining_time = custom_focus_time;
-            current_tab = TAB_TASK;
-
-            ui_break_activities_hide_menu();
-            ui_pomodoro_analytics_hide(NULL);
-            ui_task_list_show();
-
-            _schedule_scroll_reset();
-
-            if (_break_tab) lv_obj_set_hidden(_break_tab, true);
-            if (_stats_tab) lv_obj_set_hidden(_stats_tab, true);
-            if (_task_list_tab) lv_obj_set_hidden(_task_list_tab, false);
-
-            if (_task_list_tab) {
-                lv_obj_set_style_local_border_width(_task_list_tab, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, 2);
-                lv_obj_set_style_local_border_color(_task_list_tab, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_BLACK);
-            }
-            if (_break_tab) {
-                lv_obj_set_style_local_border_width(_break_tab, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, 0);
-            }
-            if (_stats_tab) {
-                lv_obj_set_style_local_border_width(_stats_tab, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, 0);
-            }
             break;
         case MODE_SHORT_BREAK:
             remaining_time = custom_short_break_time;
-            if (_break_tab) lv_obj_set_hidden(_break_tab, false);
-            if (_stats_tab) lv_obj_set_hidden(_stats_tab, false);
-            if (_task_list_tab) lv_obj_set_hidden(_task_list_tab, false);
-            if (current_tab == TAB_BREAK) {
-                ui_break_activities_show_menu();
-            } else {
-                ui_break_activities_hide_menu();
-            }
             break;
         case MODE_LONG_BREAK:
             remaining_time = custom_long_break_time;
-            if (_break_tab) lv_obj_set_hidden(_break_tab, false);
-            if (_stats_tab) lv_obj_set_hidden(_stats_tab, false);
-            if (_task_list_tab) lv_obj_set_hidden(_task_list_tab, false);
-            if (current_tab == TAB_BREAK) {
-                ui_break_activities_show_menu();
-            } else {
-                ui_break_activities_hide_menu();
-            }
             break;
     }
-    if (auto_start) {
+    if (auto_start)
+    {
         auto_start = false;
         timer_running = true;
         esp_timer_start_periodic(pomodoro_timer, 1000000);
         lv_obj_set_style_local_value_str(_btn_start, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "Pause");
         _play_music_for_mode(mode);
     }
-    else {
+    else
+    {
         if (music_is_playing) {
             audio_player_pause();
             music_is_paused = true;
@@ -905,16 +784,21 @@ static void _set_timer_mode(timer_mode_t mode){
     _update_session_tracker();
 }
 
-static void _pomodoro_tick(void *arg) {
-    if (remaining_time > 0) {
+static void _pomodoro_tick(void *arg)
+{
+    if (remaining_time > 0) 
+    {
         remaining_time--;
         if (music_is_playing) {
             switch (current_mode) {
                 case MODE_FOCUS:
+                    focus_music_state.elapsed_ms += 1000;
                     break;
                 case MODE_SHORT_BREAK:
+                    short_break_music_state.elapsed_ms += 1000;
                     break;
                 case MODE_LONG_BREAK:
+                    long_break_music_state.elapsed_ms += 1000;
                     break;
             }
         }
@@ -926,20 +810,26 @@ static void _pomodoro_tick(void *arg) {
         esp_timer_stop(pomodoro_timer);
         timer_running = false;
         
-        if (current_mode == MODE_FOCUS) {
+        if (current_mode == MODE_FOCUS)
+        {
             // need to store in cloud/database - completed focus session with duration
             completed_pomodoros++;
             current_session++;
-            if (completed_pomodoros >= focus_sessions_before_long_break) {
+            // after # focus sessions, take long break
+            if (completed_pomodoros >= focus_sessions_before_long_break)
+            {
                 current_mode = MODE_LONG_BREAK;
                 completed_pomodoros = 0;
             }
-            else {
+            else
+            {
                 current_mode = MODE_SHORT_BREAK;
             }
             auto_start = true;
         }
-        else if (current_mode == MODE_SHORT_BREAK || current_mode == MODE_LONG_BREAK) {
+        else if (current_mode == MODE_SHORT_BREAK || current_mode == MODE_LONG_BREAK)
+        {
+            // after any break, go back to focus
             current_mode = MODE_FOCUS;
             auto_start = true;
         }
@@ -948,7 +838,8 @@ static void _pomodoro_tick(void *arg) {
     }
 }
 
-static void _update_timer_display(void) {
+static void _update_timer_display(void)
+{
     static char buf[8];
     int minutes = remaining_time / 60;
     int seconds = remaining_time % 60;
@@ -956,7 +847,8 @@ static void _update_timer_display(void) {
     lv_label_set_text(_label_timer, buf);
 }
 
-static void _ui_update_task_cb(lv_task_t *task) {
+static void _ui_update_task_cb(lv_task_t *task)
+{
     if (timer_update_needed) {
         timer_update_needed = false;
         
@@ -976,7 +868,8 @@ static void _update_session_tracker(void){
     static char session_buf[32];
     
     if (current_session == 0){
-        switch (current_mode) {
+        switch (current_mode)
+        {
             case MODE_FOCUS:
                 lv_label_set_text(_label_state, "Time to focus!");
                 return;
@@ -1002,25 +895,30 @@ static void _update_session_tracker(void){
     }
 }
 
-static void _show_time_picker(void) {
+static void _show_time_picker(void)
+{
     _time_picker_popup = lv_obj_create(lv_scr_act(), NULL);
     lv_obj_set_size(_time_picker_popup, LV_HOR_RES, LV_VER_RES);
     lv_obj_set_style_local_bg_opa(_time_picker_popup, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_OPA_50);
     lv_obj_set_style_local_bg_color(_time_picker_popup, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_BLACK);
     
+    // picker container
     lv_obj_t *picker_cont = lv_obj_create(_time_picker_popup, NULL);
     lv_obj_set_size(picker_cont, 320, 280);
     lv_obj_align(picker_cont, NULL, LV_ALIGN_CENTER, 0, 0);
     lv_obj_set_style_local_bg_color(picker_cont, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_WHITE);
     lv_obj_set_style_local_radius(picker_cont, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, 10);
     
+    // title
     lv_obj_t *title = lv_label_create(picker_cont, NULL);
     lv_label_set_text(title, "Set Timer Duration");
     lv_obj_set_style_local_text_font(title, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &font_en_24);
     lv_obj_align(title, NULL, LV_ALIGN_IN_TOP_MID, 0, 15);
     
+    // get current mode's time
     int current_time;
-    switch (current_mode) {
+    switch (current_mode)
+    {
         case MODE_FOCUS:
             current_time = custom_focus_time;
             break;
@@ -1075,12 +973,14 @@ static void _show_time_picker(void) {
     lv_label_set_text(sec_label, "sec");
     lv_obj_align(sec_label, _roller_seconds, LV_ALIGN_OUT_RIGHT_MID, 5, 0);
     
+    // button container
     lv_obj_t *btn_cont = lv_obj_create(picker_cont, NULL);
     lv_obj_set_size(btn_cont, 280, 50);
     lv_obj_align(btn_cont, roller_cont, LV_ALIGN_OUT_BOTTOM_MID, 0, 15);
     lv_obj_set_style_local_border_width(btn_cont, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, 0);
     lv_obj_set_style_local_bg_opa(btn_cont, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_OPA_TRANSP);
     
+    // cancel button
     lv_obj_t *btn_cancel = lv_btn_create(btn_cont, NULL);
     lv_obj_set_size(btn_cancel, 120, 45);
     lv_obj_align(btn_cancel, NULL, LV_ALIGN_IN_LEFT_MID, 0, 0);
@@ -1088,6 +988,7 @@ static void _show_time_picker(void) {
     lv_obj_set_style_local_value_str(btn_cancel, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, "Cancel");
     lv_obj_set_style_local_bg_color(btn_cancel, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(220, 220, 220));
     
+    // confirm button
     lv_obj_t *btn_confirm = lv_btn_create(btn_cont, NULL);
     lv_obj_set_size(btn_confirm, 120, 45);
     lv_obj_align(btn_confirm, NULL, LV_ALIGN_IN_RIGHT_MID, 0, 0);
@@ -1096,8 +997,10 @@ static void _show_time_picker(void) {
     lv_obj_set_style_local_bg_color(btn_confirm, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(100, 180, 100));
 }
 
-static void _hide_time_picker(void) {
-    if (_time_picker_popup) {
+static void _hide_time_picker(void)
+{
+    if (_time_picker_popup)
+    {
         lv_obj_del(_time_picker_popup);
         _time_picker_popup = NULL;
         _roller_minutes = NULL;
@@ -1105,25 +1008,33 @@ static void _hide_time_picker(void) {
     }
 }
 
-static void _timer_label_click_cb(lv_obj_t *obj, lv_event_t event) {
-    if (event == LV_EVENT_CLICKED) {
-        if (!timer_running) {
+static void _timer_label_click_cb(lv_obj_t *obj, lv_event_t event)
+{
+    if (event == LV_EVENT_CLICKED)
+    {
+        if (!timer_running)
+        {
             _show_time_picker();
         }
     }
 }
 
-static void _time_picker_confirm_cb(lv_obj_t *obj, lv_event_t event) {
+static void _time_picker_confirm_cb(lv_obj_t *obj, lv_event_t event)
+{
     if (event == LV_EVENT_CLICKED)
-    {   uint16_t minutes = lv_roller_get_selected(_roller_minutes);
+    {
+        // get selected values
+        uint16_t minutes = lv_roller_get_selected(_roller_minutes);
         uint16_t seconds = lv_roller_get_selected(_roller_seconds);
         
         int new_time = minutes * 60 + seconds;
         
-        if (new_time < 1) {
+        if (new_time < 1)
+        {
             new_time = 1;
         }
-        switch (current_mode) {
+        switch (current_mode)
+        {
             case MODE_FOCUS:
                 custom_focus_time = new_time;
                 break;
@@ -1140,14 +1051,18 @@ static void _time_picker_confirm_cb(lv_obj_t *obj, lv_event_t event) {
     }
 }
 
-static void _time_picker_cancel_cb(lv_obj_t *obj, lv_event_t event) {
-    if (event == LV_EVENT_CLICKED) {
+static void _time_picker_cancel_cb(lv_obj_t *obj, lv_event_t event)
+{
+    if (event == LV_EVENT_CLICKED)
+    {
         _hide_time_picker();
     }
 }
 
-static void _btn_settings_cb(lv_obj_t *obj, lv_event_t event) {
-    if (event == LV_EVENT_CLICKED) {
+static void _btn_settings_cb(lv_obj_t *obj, lv_event_t event)
+{
+    if (event == LV_EVENT_CLICKED)
+    {   
         temp_sessions_count = focus_sessions_before_long_break;
         temp_focus_time = custom_focus_time;
         temp_short_break_time = custom_short_break_time;
@@ -1157,7 +1072,9 @@ static void _btn_settings_cb(lv_obj_t *obj, lv_event_t event) {
 }
 
 //settings popup
-static void _show_settings_popup(void) {
+static void _show_settings_popup(void)
+{
+    // background
     _settings_popup = lv_obj_create(lv_scr_act(), NULL);
     lv_obj_set_size(_settings_popup, LV_HOR_RES, LV_VER_RES);
     lv_obj_set_style_local_bg_opa(_settings_popup, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_OPA_50);
@@ -1262,7 +1179,7 @@ static void _show_settings_popup(void) {
     
     // roller container
     lv_obj_t *focus_roller_cont = lv_cont_create(page, NULL);
-    lv_obj_set_size(focus_roller_cont, 200, 100);
+    lv_obj_set_size(focus_roller_cont, 250, 100);
     lv_cont_set_layout(focus_roller_cont, LV_LAYOUT_OFF);
     lv_obj_set_style_local_border_width(focus_roller_cont, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
     lv_obj_set_style_local_bg_opa(focus_roller_cont, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_OPA_TRANSP);
@@ -1303,7 +1220,7 @@ static void _show_settings_popup(void) {
     
     // music dropdown (use pre-built options)
     _dropdown_focus_music = lv_dropdown_create(page, NULL);
-    lv_obj_set_width(_dropdown_focus_music, 200);
+    lv_obj_set_width(_dropdown_focus_music, 250);
     lv_obj_set_style_local_text_font(_dropdown_focus_music, LV_DROPDOWN_PART_MAIN, LV_STATE_DEFAULT, &font_en_20);
     lv_obj_set_style_local_text_font(_dropdown_focus_music, LV_DROPDOWN_PART_LIST, LV_STATE_DEFAULT, &font_en_20);
     lv_dropdown_set_options(_dropdown_focus_music, music_options_focus);
@@ -1323,7 +1240,7 @@ static void _show_settings_popup(void) {
     
     // roller container for short break
     lv_obj_t *short_roller_cont = lv_cont_create(page, NULL);
-    lv_obj_set_size(short_roller_cont, 200, 100);
+    lv_obj_set_size(short_roller_cont, 250, 100);
     lv_cont_set_layout(short_roller_cont, LV_LAYOUT_OFF);
     lv_obj_set_style_local_border_width(short_roller_cont, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
     lv_obj_set_style_local_bg_opa(short_roller_cont, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_OPA_TRANSP);
@@ -1364,7 +1281,7 @@ static void _show_settings_popup(void) {
     
     // music dropdown
     _dropdown_short_music = lv_dropdown_create(page, NULL);
-    lv_obj_set_width(_dropdown_short_music, 200);
+    lv_obj_set_width(_dropdown_short_music, 250);
     lv_obj_set_style_local_text_font(_dropdown_short_music, LV_DROPDOWN_PART_MAIN, LV_STATE_DEFAULT, &font_en_20);
     lv_obj_set_style_local_text_font(_dropdown_short_music, LV_DROPDOWN_PART_LIST, LV_STATE_DEFAULT, &font_en_20);
     lv_dropdown_set_options(_dropdown_short_music, music_options_short);
@@ -1384,7 +1301,7 @@ static void _show_settings_popup(void) {
     
     // roller container for long break
     lv_obj_t *long_roller_cont = lv_cont_create(page, NULL);
-    lv_obj_set_size(long_roller_cont, 200, 100);
+    lv_obj_set_size(long_roller_cont, 250, 100);
     lv_cont_set_layout(long_roller_cont, LV_LAYOUT_OFF);
     lv_obj_set_style_local_border_width(long_roller_cont, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 0);
     lv_obj_set_style_local_bg_opa(long_roller_cont, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_OPA_TRANSP);
@@ -1425,7 +1342,7 @@ static void _show_settings_popup(void) {
     
     // music dropdown
     _dropdown_long_music = lv_dropdown_create(page, NULL);
-    lv_obj_set_width(_dropdown_long_music, 200);
+    lv_obj_set_width(_dropdown_long_music, 250);
     lv_obj_set_style_local_text_font(_dropdown_long_music, LV_DROPDOWN_PART_MAIN, LV_STATE_DEFAULT, &font_en_20);
     lv_obj_set_style_local_text_font(_dropdown_long_music, LV_DROPDOWN_PART_LIST, LV_STATE_DEFAULT, &font_en_20);
     lv_dropdown_set_options(_dropdown_long_music, music_options_long);
@@ -1453,6 +1370,7 @@ static void _show_settings_popup(void) {
         lv_dropdown_set_selected(_dropdown_focus_music, music_file_count);
     }
     
+    // short break music selection
     if (short_break_music_file_path[0] != '\0') {
         int dropdown_idx = 0;
         for (int i = 0; i < music_file_count; i++) {
@@ -1466,6 +1384,7 @@ static void _show_settings_popup(void) {
         lv_dropdown_set_selected(_dropdown_short_music, music_file_count);
     }
     
+    // long break music selection
     if (long_break_music_file_path[0] != '\0') {
         int dropdown_idx = 0;
         for (int i = 0; i < music_file_count; i++) {
@@ -1480,8 +1399,10 @@ static void _show_settings_popup(void) {
     }
 }
 
-static void _hide_settings_popup(void) {
-    if (_settings_popup) {
+static void _hide_settings_popup(void)
+{
+    if (_settings_popup)
+    {
         lv_obj_del(_settings_popup);
         _settings_popup = NULL;
         _label_sessions_count = NULL;
@@ -1499,31 +1420,39 @@ static void _hide_settings_popup(void) {
     }
 }
 
-static void _update_sessions_display(void) {
-    if (_textarea_sessions) {
+static void _update_sessions_display(void)
+{
+    if (_textarea_sessions)
+    {
         static char buf[8];
         sprintf(buf, "%d", temp_sessions_count);
         lv_textarea_set_text(_textarea_sessions, buf);
     }
 }
 
-static void _btn_decrease_sessions_cb(lv_obj_t *obj, lv_event_t event) {
-    if (event == LV_EVENT_CLICKED) {
-        if (temp_sessions_count > 1) {
+static void _btn_decrease_sessions_cb(lv_obj_t *obj, lv_event_t event)
+{
+    if (event == LV_EVENT_CLICKED)
+    {
+        if (temp_sessions_count > 1) 
+        {
             temp_sessions_count--;
             _update_sessions_display();
         }
     }
 }
 
-static void _btn_increase_sessions_cb(lv_obj_t *obj, lv_event_t event) {
-    if (event == LV_EVENT_CLICKED) {
+static void _btn_increase_sessions_cb(lv_obj_t *obj, lv_event_t event)
+{
+    if (event == LV_EVENT_CLICKED)
+    {
         temp_sessions_count++; 
         _update_sessions_display();
     }
 }
 
-static void _textarea_sessions_focus_cb(lv_obj_t *obj, lv_event_t event) {
+static void _textarea_sessions_focus_cb(lv_obj_t *obj, lv_event_t event)
+{
     if (event == LV_EVENT_FOCUSED || event == LV_EVENT_CLICKED) {
         if (!_keyboard) {
             if (_settings_popup) {
@@ -1560,8 +1489,10 @@ static void _textarea_sessions_focus_cb(lv_obj_t *obj, lv_event_t event) {
     }
 }
 
-static void _settings_confirm_cb(lv_obj_t *obj, lv_event_t event) {
-    if (event == LV_EVENT_CLICKED) {
+static void _settings_confirm_cb(lv_obj_t *obj, lv_event_t event)
+{
+    if (event == LV_EVENT_CLICKED)
+    {
         focus_sessions_before_long_break = temp_sessions_count;
         
         uint16_t focus_min = lv_roller_get_selected(_roller_focus_min);
@@ -1603,6 +1534,7 @@ static void _settings_confirm_cb(lv_obj_t *obj, lv_event_t event) {
         }
         ESP_LOGI("POMODORO", "long music: dropdown=%d, path=%s", long_dropdown_sel, long_break_music_file_path);
         
+        // Update current timer if in matching mode and not running
         if (!timer_running) {
             _set_timer_mode(current_mode);
             _update_timer_display();
@@ -1612,20 +1544,85 @@ static void _settings_confirm_cb(lv_obj_t *obj, lv_event_t event) {
     }
 }
 
-static void _settings_cancel_cb(lv_obj_t *obj, lv_event_t event) {
-    if (event == LV_EVENT_CLICKED) {
+static void _settings_cancel_cb(lv_obj_t *obj, lv_event_t event)
+{
+    if (event == LV_EVENT_CLICKED)
+    { 
         _hide_settings_popup();
     }
 }
 
-static void _slider_volume_cb(lv_obj_t *obj, lv_event_t event) {
+static void _btn_add_task_cb(lv_obj_t *obj, lv_event_t event)
+{
+    if (event == LV_EVENT_CLICKED)
+    {
+        const char *task_text = lv_textarea_get_text(_textarea_task);
+        if (strlen(task_text) == 0) return;
+
+        lv_obj_t *list_page = lv_page_get_scrollable(_task_list);
+
+        lv_obj_t *task_cont = lv_cont_create(_task_list, NULL);
+        lv_obj_set_size(task_cont, lv_obj_get_width(_task_list) - 40, 40);
+        lv_cont_set_layout(task_cont, LV_LAYOUT_ROW_MID);
+        lv_obj_set_style_local_pad_inner(task_cont, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 10);
+        lv_obj_set_style_local_border_width(task_cont, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 1);
+        lv_obj_set_style_local_border_color(task_cont, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(200, 200, 200));
+        lv_obj_set_style_local_radius(task_cont, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, 5);
+
+        lv_obj_t *checkbox = lv_checkbox_create(task_cont, NULL);
+        lv_checkbox_set_text(checkbox, task_text);
+        lv_obj_set_event_cb(checkbox, _checkbox_event_cb);
+
+        lv_textarea_set_text(_textarea_task, "");
+    }
+}
+
+static void _checkbox_event_cb(lv_obj_t *obj, lv_event_t event)
+{
+    if (event == LV_EVENT_VALUE_CHANGED)
+    {
+        if (lv_checkbox_is_checked(obj))
+        {
+            lv_obj_t *task_cont = lv_obj_get_parent(obj);
+            lv_obj_del(task_cont);
+        }
+    }
+}
+
+static void _textarea_focus_cb(lv_obj_t *obj, lv_event_t event)
+{
+    if (event == LV_EVENT_FOCUSED || event == LV_EVENT_CLICKED) {
+        if (!_keyboard) {
+            _keyboard = ui_keyboard_create(obj);
+        }
+    }
+    else if (event == LV_EVENT_DEFOCUSED || event == LV_EVENT_APPLY) {
+        if (_keyboard) {
+            ui_keyboard_delete(_keyboard);
+            _keyboard = NULL;
+        }
+    }
+}
+
+static void _btn_analytics_cb(lv_obj_t *obj, lv_event_t event)
+{
+    if (event == LV_EVENT_CLICKED)
+    {
+        ui_pomodoro_timer_hide(NULL);
+        ui_pomodoro_analytics_show(NULL);
+    }
+}
+
+static void _slider_volume_cb(lv_obj_t *obj, lv_event_t event)
+{
     if (event == LV_EVENT_VALUE_CHANGED) {
         current_volume = lv_slider_get_value(obj);
         bsp_extra_codec_volume_set(current_volume, NULL);
     }
 }
 
-static void _stop_music(void) {
+static void _stop_music(void)
+{
     if (music_is_playing) {
         audio_player_stop();
         music_is_playing = false;
@@ -1636,7 +1633,8 @@ static void _stop_music(void) {
     }
 }
 
-static void _play_music_for_mode(timer_mode_t mode) {
+static void _play_music_for_mode(timer_mode_t mode)
+{
     char *music_file_path = NULL;
     switch (mode) {
         case MODE_FOCUS:
@@ -1655,6 +1653,13 @@ static void _play_music_for_mode(timer_mode_t mode) {
             music_is_playing = false;
             music_is_paused = false;
         }
+        currently_playing_path[0] = '\0';
+        return;
+    }
+    if ((music_is_paused || music_is_playing) && strcmp(currently_playing_path, music_file_path) == 0) {
+        audio_player_resume();
+        music_is_playing = true;
+        music_is_paused = false;
         return;
     }
     if (music_is_playing || music_is_paused) {
@@ -1670,12 +1675,4 @@ static void _play_music_for_mode(timer_mode_t mode) {
     audio_player_play(current_music_fp);
     music_is_playing = true;
     music_is_paused = false;
-}
-
-lv_obj_t *ui_pomodoro_get_task_list(void) {
-    return NULL;  // Task list now renders directly in content_area
-}
-
-lv_obj_t *ui_pomodoro_get_task_input(void) {
-    return input_cont;
 }

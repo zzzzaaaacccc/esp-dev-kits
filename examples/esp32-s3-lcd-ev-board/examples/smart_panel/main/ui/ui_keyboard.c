@@ -1,8 +1,7 @@
 #include "ui_keyboard.h"
 #include "lvgl.h"
 
-lv_obj_t *ui_keyboard_create(lv_obj_t *textarea)
-{   
+lv_obj_t *ui_keyboard_create(lv_obj_t *textarea) {
     //create keyboard
     lv_obj_t *kb = lv_keyboard_create(lv_scr_act(), NULL);
     
@@ -21,15 +20,13 @@ lv_obj_t *ui_keyboard_create(lv_obj_t *textarea)
     return kb;
 }
 
-void ui_keyboard_delete(lv_obj_t *keyboard)
-{
+void ui_keyboard_delete(lv_obj_t *keyboard) {
     if (keyboard) {
         lv_obj_del(keyboard);
     }
 }
 
-void ui_keyboard_set_textarea(lv_obj_t *keyboard, lv_obj_t *textarea)
-{
+void ui_keyboard_set_textarea(lv_obj_t *keyboard, lv_obj_t *textarea) {
     if (keyboard && textarea) {
         lv_keyboard_set_textarea(keyboard, textarea);
     }

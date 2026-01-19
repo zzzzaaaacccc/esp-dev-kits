@@ -6,14 +6,11 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-
 void ui_habit_tracker_statistics_init(void);
 void ui_habit_tracker_statistics_show(void);
 void ui_habit_tracker_statistics_hide(void);
-// refresh stats data
 void ui_habit_tracker_statistics_refresh(void);
 
-//  switch btwn diff views
 typedef enum {
     STATS_VIEW_OVERVIEW,
     STATS_VIEW_TRENDS,

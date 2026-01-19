@@ -14,10 +14,10 @@ typedef struct {
     char description[64];
     uint8_t frequency_type; // 0: weekly, 1: custom
     uint8_t days_selected[7]; // weekly: 0=Mon, 1=Tue, etc.
-    uint8_t num_days; // # of selected days
+    uint8_t num_days; 
     uint8_t time_option; // 0: no time, 1: specific time, 2: morn, 3: afternoon, 4: night
-    uint8_t hour; // 0-23
-    uint8_t minute; // 0-59
+    uint8_t hour; 
+    uint8_t minute; 
     uint8_t show_in_weekly_todo;
     uint8_t is_active;
     lv_calendar_date_t custom_dates[10]; // frequency -> custom (max 10 dates)

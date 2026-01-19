@@ -28,6 +28,8 @@ static lv_obj_t *edit_panel = NULL;
 static lv_obj_t *ta_habit_name = NULL;
 static lv_obj_t *ta_habit_description = NULL;
 static lv_obj_t *dd_frequency = NULL;
+static lv_obj_t *frequency_container = NULL;
+static lv_obj_t *days_container = NULL;
 static lv_obj_t *day_buttons[7] = {NULL};
 static lv_obj_t *label_days = NULL;
 static lv_obj_t *label_selected_dates = NULL;
@@ -68,14 +70,17 @@ static lv_calendar_date_t selected_custom_dates[MAX_CUSTOM_DATES];
 static uint16_t selected_custom_dates_count = 0;
 
 // update selected dates display
-static void update_selected_dates_label(void)
-{
+static void update_selected_dates_label(void) {
+    static char date_str[256];
+    strcpy(date_str, "Selected dates: ");
+    
     if (selected_custom_dates_count == 0) {
-        lv_label_set_text(label_selected_dates, "None");
+        strcat(date_str, "None");
+        lv_label_set_text(label_selected_dates, date_str);
         return;
     }
     
-    // sort dates chronologically
+    // sort chronologically
     for (int i = 0; i < selected_custom_dates_count - 1; i++) {
         for (int j = i + 1; j < selected_custom_dates_count; j++) {
             lv_calendar_date_t *a = &selected_custom_dates[i];
@@ -91,10 +96,6 @@ static void update_selected_dates_label(void)
             }
         }
     }
-    
-    // text date string
-    static char date_str[256];
-    strcpy(date_str, "");
     
     const char *months[] = {"", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
     
@@ -112,9 +113,7 @@ static void update_selected_dates_label(void)
     lv_label_set_text(label_selected_dates, date_str);
 }
 
-// Helper function to update preset time label
-static void update_preset_time_label(uint16_t time_option)
-{
+static void update_preset_time_label(uint16_t time_option) {
     if (time_option == 0) {
         lv_obj_set_hidden(label_preset_time, true);
     } else if (time_option == 1) {
@@ -131,10 +130,9 @@ static void update_preset_time_label(uint16_t time_option)
     }
 }
 
-static void habit_list_event_cb(lv_obj_t *obj, lv_event_t event)
-{
+static void habit_list_event_cb(lv_obj_t *obj, lv_event_t event) {
     if (event == LV_EVENT_CLICKED) {
-        // get the actual habit index stored in the button's user data
+        // get the actual habit index stored in the button's user data (cloud/database)
         uint16_t habit_idx = (uint16_t)(uintptr_t)lv_obj_get_user_data(obj);
         if (habit_idx < habit_count) {
             show_edit_panel(habit_idx);
@@ -142,15 +140,13 @@ static void habit_list_event_cb(lv_obj_t *obj, lv_event_t event)
     }
 }
 
-static void add_new_event_cb(lv_obj_t *obj, lv_event_t event)
-{
+static void add_new_event_cb(lv_obj_t *obj, lv_event_t event) {
     if (event == LV_EVENT_CLICKED) {
         show_edit_panel(-1);
     }
 }
 
-static void day_btn_event_cb(lv_obj_t *obj, lv_event_t event)
-{
+static void day_btn_event_cb(lv_obj_t *obj, lv_event_t event) {
     if (event == LV_EVENT_CLICKED) {
         for (int i = 0; i < 7; i++) {
             if (obj == day_buttons[i]) {
@@ -166,8 +162,7 @@ static void day_btn_event_cb(lv_obj_t *obj, lv_event_t event)
     }
 }
 
-static void save_btn_event_cb(lv_obj_t *obj, lv_event_t event)
-{
+static void save_btn_event_cb(lv_obj_t *obj, lv_event_t event) {
     if (event == LV_EVENT_CLICKED) {
         save_current_habit();
         hide_edit_panel();
@@ -176,8 +171,7 @@ static void save_btn_event_cb(lv_obj_t *obj, lv_event_t event)
     }
 }
 
-static void give_up_btn_event_cb(lv_obj_t *obj, lv_event_t event)
-{
+static void give_up_btn_event_cb(lv_obj_t *obj, lv_event_t event) {
     if (event == LV_EVENT_CLICKED) {
         if (selected_habit_idx >= 0 && selected_habit_idx < habit_count) {
             // need to store in cloud/database -> mark habit as inactive/deleted and remove from user's habit list
@@ -189,15 +183,13 @@ static void give_up_btn_event_cb(lv_obj_t *obj, lv_event_t event)
     }
 }
 
-static void cancel_edit_event_cb(lv_obj_t *obj, lv_event_t event)
-{
+static void cancel_edit_event_cb(lv_obj_t *obj, lv_event_t event) {
     if (event == LV_EVENT_CLICKED) {
         hide_edit_panel();
     }
 }
 
-static void ta_event_cb(lv_obj_t *obj, lv_event_t event)
-{
+static void ta_event_cb(lv_obj_t *obj, lv_event_t event) {
     if (event == LV_EVENT_FOCUSED || event == LV_EVENT_CLICKED) {
         if (!_keyboard) {
             if (edit_panel) {
@@ -210,7 +202,6 @@ static void ta_event_cb(lv_obj_t *obj, lv_event_t event)
         if (_keyboard) {
             ui_keyboard_delete(_keyboard);
             _keyboard = NULL;
-            
             if (edit_panel) {
                 lv_obj_align(edit_panel, NULL, LV_ALIGN_CENTER, 0, 0);
             }
@@ -218,13 +209,13 @@ static void ta_event_cb(lv_obj_t *obj, lv_event_t event)
     }
 }
 
-static void time_option_event_cb(lv_obj_t *obj, lv_event_t event)
-{
+static void time_option_event_cb(lv_obj_t *obj, lv_event_t event) {
     if (event == LV_EVENT_VALUE_CHANGED) {
         uint16_t selected = lv_dropdown_get_selected(obj);
         
         if (selected == 0) {  // no time
             lv_obj_set_hidden(time_container, true);
+            lv_obj_set_hidden(label_preset_time, true);
         }
         else if (selected == 1) {  // specific time
             lv_obj_set_hidden(time_container, false);
@@ -236,89 +227,43 @@ static void time_option_event_cb(lv_obj_t *obj, lv_event_t event)
             lv_obj_set_hidden(roller_minute, false);
         }
         else {  // morn (2), afternoon (3), night (4)
-            lv_obj_set_hidden(time_container, false);
-            lv_obj_set_size(time_container, 250, 30); 
+            lv_obj_set_hidden(time_container, true);
             lv_obj_set_hidden(label_hour, true);
             lv_obj_set_hidden(label_minute, true);
             lv_obj_set_hidden(roller_hour, true);
             lv_obj_set_hidden(roller_minute, true);
             update_preset_time_label(selected);
         }
+        lv_obj_t *scrl = lv_page_get_scrl(edit_panel);
+        lv_obj_invalidate(scrl);
     }
 }
 
-static void frequency_option_event_cb(lv_obj_t *obj, lv_event_t event)
-{
+static void frequency_option_event_cb(lv_obj_t *obj, lv_event_t event) {
     if (event == LV_EVENT_VALUE_CHANGED) {
         uint16_t option = lv_dropdown_get_selected(obj);
         
         if (option == 1) {  // custom
-            for (int i = 0; i < 7; i++) {
-                lv_obj_set_hidden(day_buttons[i], true);
+            lv_obj_set_hidden(label_days, true);
+            if (days_container) {
+                lv_obj_set_hidden(days_container, true);
             }
-            lv_label_set_text(label_days, "Selected dates:");
-            lv_obj_set_hidden(label_selected_dates, false);
+            lv_obj_set_hidden(frequency_container, false);
             update_selected_dates_label();
-            
-            if (!calendar_popup) {
-                calendar_popup = lv_obj_create(lv_scr_act(), NULL);
-                lv_obj_set_size(calendar_popup, 380, 310);
-                lv_obj_align(calendar_popup, NULL, LV_ALIGN_CENTER, 0, 0);
-                lv_obj_set_style_local_pad_inner(calendar_popup, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, 0);
-                
-                lv_obj_t *cal_title = lv_label_create(calendar_popup, NULL);
-                lv_label_set_text(cal_title, "Select Custom Dates");
-                lv_obj_align(cal_title, NULL, LV_ALIGN_IN_TOP_MID, 0, 5);
-                
-                calendar = lv_calendar_create(calendar_popup, NULL);
-                lv_obj_set_size(calendar, 320, 220);
-                lv_obj_align(calendar, cal_title, LV_ALIGN_OUT_BOTTOM_MID, 0, 5);
-                
-                // set to current date
-                time_t now = time(NULL);
-                struct tm *tm_info = localtime(&now);
-                lv_calendar_date_t today_date = {
-                    .year = tm_info->tm_year + 1900,
-                    .month = tm_info->tm_mon + 1,
-                    .day = tm_info->tm_mday
-                };
-                lv_calendar_set_today_date(calendar, &today_date);
-                lv_calendar_set_showed_date(calendar, &today_date);
-                
-                // highlight selected dates
-                lv_obj_set_style_local_bg_color(calendar, LV_CALENDAR_PART_DATE, LV_STATE_PRESSED, LV_COLOR_ORANGE);
-                lv_obj_set_style_local_bg_color(calendar, LV_CALENDAR_PART_DATE, LV_STATE_FOCUSED, LV_COLOR_ORANGE);
-                lv_obj_set_style_local_bg_color(calendar, LV_CALENDAR_PART_DATE, LV_STATE_CHECKED, LV_COLOR_ORANGE);
-                lv_obj_set_style_local_text_color(calendar, LV_CALENDAR_PART_DATE, LV_STATE_CHECKED, LV_COLOR_WHITE);
-                
-                lv_obj_set_event_cb(calendar, calendar_event_cb);
-                
-                lv_obj_t *btn_cal_close = lv_btn_create(calendar_popup, NULL);
-                lv_obj_set_size(btn_cal_close, 100, 35);
-                lv_obj_align(btn_cal_close, calendar, LV_ALIGN_OUT_BOTTOM_MID, 0, 5);
-                lv_obj_set_event_cb(btn_cal_close, calendar_close_event_cb);
-                lv_obj_t *label_close = lv_label_create(btn_cal_close, NULL);
-                lv_label_set_text(label_close, "Done");
-            } else {
-                lv_obj_set_hidden(calendar_popup, false);
-                lv_obj_move_foreground(calendar_popup);
-            }
         } else {  // weekly
-            for (int i = 0; i < 7; i++) {
-                lv_obj_set_hidden(day_buttons[i], false);
-            }
             lv_label_set_text(label_days, "On days:");
-            lv_obj_set_hidden(label_selected_dates, true);
-            
-            if (calendar_popup) {
-                lv_obj_set_hidden(calendar_popup, true);
+            lv_obj_set_hidden(label_days, false);
+            if (days_container) {
+                lv_obj_set_hidden(days_container, false);
             }
+            lv_obj_set_hidden(frequency_container, true);
         }
+        lv_obj_t *scrl = lv_page_get_scrl(edit_panel);
+        lv_obj_invalidate(scrl);
     }
 }
 
-static void calendar_close_event_cb(lv_obj_t *obj, lv_event_t event)
-{
+static void calendar_close_event_cb(lv_obj_t *obj, lv_event_t event) {
     if (event == LV_EVENT_CLICKED) {
         if (calendar_popup) {
             lv_obj_set_hidden(calendar_popup, true);
@@ -327,8 +272,7 @@ static void calendar_close_event_cb(lv_obj_t *obj, lv_event_t event)
     }
 }
 
-static void calendar_event_cb(lv_obj_t *obj, lv_event_t event)
-{
+static void calendar_event_cb(lv_obj_t *obj, lv_event_t event) {
     if (event == LV_EVENT_VALUE_CHANGED) {
         lv_calendar_date_t *date = lv_calendar_get_pressed_date(obj);
         if (date) {
@@ -369,36 +313,8 @@ static void calendar_event_cb(lv_obj_t *obj, lv_event_t event)
     }
 }
 
-void ui_manage_habits_init(void)
-{
-    lv_obj_t *obj_page = ui_page_get_obj();
-    
-    // habit list cont
-    list_container = lv_obj_create(obj_page, NULL);
-    lv_obj_set_size(list_container, 520, 300);
-    lv_obj_align(list_container, NULL, LV_ALIGN_IN_RIGHT_MID, -40, 30);
-    lv_obj_set_hidden(list_container, true);
-    
-    // title
-    lv_obj_t *list_title = lv_label_create(list_container, NULL);
-    lv_label_set_text(list_title, "Your Habits");
-    lv_obj_align(list_title, NULL, LV_ALIGN_IN_TOP_MID, 0, 10);
-    
-    // scrollable
-    habit_list = lv_list_create(list_container, NULL);
-    lv_obj_set_size(habit_list, 480, 200);
-    lv_obj_align(habit_list, list_title, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
-    
-    // "Add New Habit" button 
-    btn_add_new = lv_btn_create(list_container, NULL);
-    lv_obj_set_size(btn_add_new, 460, 45);
-    lv_obj_align(btn_add_new, habit_list, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
-    lv_obj_set_event_cb(btn_add_new, add_new_event_cb);
-    lv_obj_t *label_add = lv_label_create(btn_add_new, NULL);
-    lv_label_set_text(label_add, LV_SYMBOL_PLUS " Add New Habit");
-    lv_obj_set_style_local_bg_color(btn_add_new, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(100, 200, 255));
-    
-    // edit panel
+// edit panel UI
+static void ui_manage_habits_create_edit_panel(void) {
     edit_panel = lv_page_create(lv_scr_act(), NULL);
     lv_obj_set_size(edit_panel, 500, 460);
     lv_obj_align(edit_panel, NULL, LV_ALIGN_CENTER, 0, 0);
@@ -449,7 +365,7 @@ void ui_manage_habits_init(void)
     label_days = lv_label_create(scrl, NULL);
     lv_label_set_text(label_days, "On days:");
     
-    lv_obj_t *days_container = lv_obj_create(scrl, NULL);
+    days_container = lv_obj_create(scrl, NULL);
     lv_obj_set_size(days_container, 380, 50);
     lv_obj_set_style_local_bg_opa(days_container, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_OPA_TRANSP);
     lv_obj_set_style_local_border_width(days_container, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, 0);
@@ -472,11 +388,61 @@ void ui_manage_habits_init(void)
         lv_obj_set_style_local_bg_color(day_buttons[i], LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_GRAY);
     }
     
-    label_selected_dates = lv_label_create(scrl, NULL);
+    frequency_container = lv_obj_create(scrl, NULL);
+    lv_obj_set_size(frequency_container, 400, 350);
+    lv_obj_set_style_local_bg_opa(frequency_container, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_OPA_TRANSP);
+    lv_obj_set_style_local_border_width(frequency_container, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, 0);
+    lv_obj_set_hidden(frequency_container, true);
+    lv_obj_set_style_local_pad_inner(frequency_container, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, 0);
+    
+    // calendar popup
+    calendar_popup = lv_obj_create(frequency_container, NULL);
+    lv_obj_set_size(calendar_popup, 380, 240);
+    lv_obj_set_style_local_pad_inner(calendar_popup, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, 0);
+    // place calendar popup at the top of the frequency container
+    lv_obj_align(calendar_popup, NULL, LV_ALIGN_IN_TOP_MID, 0, 0);
+    
+    lv_obj_t *cal_title = lv_label_create(calendar_popup, NULL);
+    lv_label_set_text(cal_title, "Select Custom Dates");
+    lv_obj_align(cal_title, NULL, LV_ALIGN_IN_TOP_MID, 0, 3);
+    
+    calendar = lv_calendar_create(calendar_popup, NULL);
+    lv_obj_set_size(calendar, 320, 180);
+    lv_obj_align(calendar, cal_title, LV_ALIGN_OUT_BOTTOM_MID, 0, 3);
+    
+    // set to current date
+    time_t now = time(NULL);
+    struct tm *tm_info = localtime(&now);
+    lv_calendar_date_t today_date = {
+        .year = tm_info->tm_year + 1900,
+        .month = tm_info->tm_mon + 1,
+        .day = tm_info->tm_mday
+    };
+    lv_calendar_set_today_date(calendar, &today_date);
+    lv_calendar_set_showed_date(calendar, &today_date);
+    
+    // highlight selected dates
+    lv_obj_set_style_local_bg_color(calendar, LV_CALENDAR_PART_DATE, LV_STATE_PRESSED, LV_COLOR_ORANGE);
+    lv_obj_set_style_local_bg_color(calendar, LV_CALENDAR_PART_DATE, LV_STATE_FOCUSED, LV_COLOR_ORANGE);
+    lv_obj_set_style_local_bg_color(calendar, LV_CALENDAR_PART_DATE, LV_STATE_CHECKED, LV_COLOR_ORANGE);
+    lv_obj_set_style_local_text_color(calendar, LV_CALENDAR_PART_DATE, LV_STATE_CHECKED, LV_COLOR_WHITE);
+    
+    lv_obj_set_event_cb(calendar, calendar_event_cb);
+    
+    lv_obj_t *btn_cal_close = lv_btn_create(calendar_popup, NULL);
+    lv_obj_set_size(btn_cal_close, 80, 30);
+    lv_obj_align(btn_cal_close, calendar, LV_ALIGN_OUT_BOTTOM_MID, 0, 3);
+    lv_obj_set_event_cb(btn_cal_close, calendar_close_event_cb);
+    lv_obj_t *label_close = lv_label_create(btn_cal_close, NULL);
+    lv_label_set_text(label_close, "Done");
+    
+    // selected dates label directly below the calendar area
+    label_selected_dates = lv_label_create(frequency_container, NULL);
     lv_label_set_text(label_selected_dates, "None");
-    lv_obj_set_hidden(label_selected_dates, true);
-    lv_obj_set_size(label_selected_dates, 380, 50);
-    lv_obj_align(label_selected_dates, label_days, LV_ALIGN_CENTER, 0, 0);
+    lv_label_set_long_mode(label_selected_dates, LV_LABEL_LONG_BREAK);
+    lv_label_set_align(label_selected_dates, LV_LABEL_ALIGN_LEFT);
+    lv_obj_set_width(label_selected_dates, 380);
+    lv_obj_align(label_selected_dates, calendar_popup, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 8);
     
     lv_obj_t *label_time = lv_label_create(scrl, NULL);
     lv_label_set_text(label_time, "Time:");
@@ -485,22 +451,21 @@ void ui_manage_habits_init(void)
     lv_dropdown_set_options(dd_time_option, "No time\nSpecific time\nMorning\nAfternoon\nNight");
     lv_obj_set_size(dd_time_option, 180, 35);
     lv_obj_set_event_cb(dd_time_option, time_option_event_cb);
+
+    // label for preset times (morning/afternoon/night), placed directly under the dropdown
+    label_preset_time = lv_label_create(scrl, NULL);
+    lv_label_set_text(label_preset_time, "");
+    lv_obj_set_width(label_preset_time, 380);
+    lv_obj_set_style_local_text_color(label_preset_time, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_BLACK);
+    lv_label_set_align(label_preset_time, LV_LABEL_ALIGN_LEFT);
+    lv_obj_set_hidden(label_preset_time, true);
     
-    // container for time rollers with labels
+    // rollers container (for "Specific time")
     time_container = lv_obj_create(scrl, NULL);
     lv_obj_set_size(time_container, 250, 120);
     lv_obj_set_style_local_bg_opa(time_container, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_OPA_TRANSP);
     lv_obj_set_style_local_border_width(time_container, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, 0);
     lv_obj_set_hidden(time_container, true);
-    
-    // label for preset times (morn/afternoon/night)
-    label_preset_time = lv_label_create(time_container, NULL);
-    lv_label_set_text(label_preset_time, "");
-    lv_obj_set_size(label_preset_time, 200, 40);
-    lv_obj_set_style_local_text_color(label_preset_time, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_BLACK);
-    lv_label_set_align(label_preset_time, LV_LABEL_ALIGN_CENTER);
-    lv_obj_align(label_preset_time, time_container, LV_ALIGN_CENTER, 0, 0);
-    lv_obj_set_hidden(label_preset_time, true);
     
     // rollers
     roller_hour = lv_roller_create(time_container, NULL);
@@ -555,20 +520,44 @@ void ui_manage_habits_init(void)
     lv_obj_set_style_local_bg_color(btn_save, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(100, 255, 100));
     lv_label_create(btn_save, NULL);
     lv_label_set_text(lv_obj_get_child(btn_save, NULL), "Save");
+}
+
+void ui_manage_habits_init(void) {
+    lv_obj_t *obj_page = ui_page_get_obj();
     
+    list_container = lv_obj_create(obj_page, NULL);
+    lv_obj_set_size(list_container, 520, 300);
+    lv_obj_align(list_container, NULL, LV_ALIGN_IN_RIGHT_MID, -40, 30);
+    lv_obj_set_hidden(list_container, true);
+    
+    lv_obj_t *list_title = lv_label_create(list_container, NULL);
+    lv_label_set_text(list_title, "Your Habits");
+    lv_obj_align(list_title, NULL, LV_ALIGN_IN_TOP_MID, 0, 10);
+
+    habit_list = lv_list_create(list_container, NULL);
+    lv_obj_set_size(habit_list, 480, 200);
+    lv_obj_align(habit_list, list_title, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
+    
+    btn_add_new = lv_btn_create(list_container, NULL);
+    lv_obj_set_size(btn_add_new, 460, 45);
+    lv_obj_align(btn_add_new, habit_list, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
+    lv_obj_set_event_cb(btn_add_new, add_new_event_cb);
+    lv_obj_t *label_add = lv_label_create(btn_add_new, NULL);
+    lv_label_set_text(label_add, LV_SYMBOL_PLUS " Add New Habit");
+    lv_obj_set_style_local_bg_color(btn_add_new, LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_MAKE(100, 200, 255));
+    
+    ui_manage_habits_create_edit_panel();
     ui_manage_habits_add_predefined();
 }
 
-void ui_manage_habits_show(void)
-{
+void ui_manage_habits_show(void) {
     if (list_container) {
         lv_obj_set_hidden(list_container, false);
         refresh_habit_list();
     }
 }
 
-void ui_manage_habits_hide(void)
-{
+void ui_manage_habits_hide(void) {
     if (_keyboard) {
         ui_keyboard_delete(_keyboard);
         _keyboard = NULL;
@@ -576,12 +565,10 @@ void ui_manage_habits_hide(void)
     if (list_container) {
         lv_obj_set_hidden(list_container, true);
     }
-    
     hide_edit_panel();
 }
 
-static bool ensure_habits_capacity(void)
-{
+static bool ensure_habits_capacity(void) {
     if (habits == NULL) {
         habits = (habit_t *)malloc(INITIAL_HABITS_CAPACITY * sizeof(habit_t));
         if (habits == NULL) return false;
@@ -595,12 +582,10 @@ static bool ensure_habits_capacity(void)
         habits = new_habits;
         habits_capacity = new_capacity;
     }
-    
     return true;
 }
 
-void ui_manage_habits_add_predefined(void)
-{
+void ui_manage_habits_add_predefined(void) {
     // need to get data from cloud/database - load user's saved habits
     habit_t predefined[] = {
         {"Drink Water", "Stay hydrated throughout the day", 0, {1,1,1,1,1,1,1}, 7, 2, 9, 0, 1, 1, {{0}}, 0, 0, 0, 0, 0, 0},
@@ -623,8 +608,7 @@ void ui_manage_habits_add_predefined(void)
     }
 }
 
-static void refresh_habit_list(void)
-{
+static void refresh_habit_list(void) {
     lv_list_clean(habit_list);
     for (uint16_t i = 0; i < habit_count; i++) {
         if (habits[i].is_active) {
@@ -635,8 +619,7 @@ static void refresh_habit_list(void)
     }
 }
 
-static void show_edit_panel(int16_t habit_idx)
-{
+static void show_edit_panel(int16_t habit_idx) {
     selected_habit_idx = habit_idx;
     if (habit_idx >= 0) {
         habit_t *h = &habits[habit_idx];
@@ -662,6 +645,7 @@ static void show_edit_panel(int16_t habit_idx)
         lv_dropdown_set_selected(dd_time_option, h->time_option);
         if (h->time_option == 0) {
             lv_obj_set_hidden(time_container, true);
+            lv_obj_set_hidden(label_preset_time, true);
         } else if (h->time_option == 1) {
             lv_obj_set_hidden(time_container, false);
             lv_obj_set_size(time_container, 250, 120);
@@ -671,8 +655,7 @@ static void show_edit_panel(int16_t habit_idx)
             lv_obj_set_hidden(roller_hour, false);
             lv_obj_set_hidden(roller_minute, false);
         } else {
-            lv_obj_set_hidden(time_container, false);
-            lv_obj_set_size(time_container, 250, 30);
+            lv_obj_set_hidden(time_container, true);
             lv_obj_set_hidden(label_hour, true);
             lv_obj_set_hidden(label_minute, true);
             lv_obj_set_hidden(roller_hour, true);
@@ -681,32 +664,27 @@ static void show_edit_panel(int16_t habit_idx)
         }
         lv_roller_set_selected(roller_hour, h->hour, LV_ANIM_OFF);
         lv_roller_set_selected(roller_minute, h->minute, LV_ANIM_OFF);
-        
         lv_obj_set_hidden(btn_give_up, false);
     } else {
         lv_textarea_set_text(ta_habit_name, "");
         lv_textarea_set_text(ta_habit_description, "");
         lv_dropdown_set_selected(dd_frequency, 0);
-        
         selected_custom_dates_count = 0;
         
         for (int i = 0; i < 7; i++) {
             day_selected[i] = false;
             lv_obj_set_style_local_bg_color(day_buttons[i], LV_BTN_PART_MAIN, LV_STATE_DEFAULT, LV_COLOR_GRAY);
         }
-        
         lv_dropdown_set_selected(dd_time_option, 0);
         lv_obj_set_hidden(time_container, true);
-        
+        lv_obj_set_hidden(label_preset_time, true);
         lv_obj_set_hidden(btn_give_up, true);
     }
-    
     lv_obj_set_hidden(edit_panel, false);
     lv_obj_move_foreground(edit_panel);
 }
 
-static void hide_edit_panel(void)
-{
+static void hide_edit_panel(void) {
     if (_keyboard) {
         ui_keyboard_delete(_keyboard);
         _keyboard = NULL;
@@ -718,8 +696,7 @@ static void hide_edit_panel(void)
     selected_habit_idx = -1;
 }
 
-static void save_current_habit(void)
-{
+static void save_current_habit(void) {
     habit_t *h;
     bool is_new_habit = false;
     if (selected_habit_idx >= 0) {
@@ -739,10 +716,8 @@ static void save_current_habit(void)
     h->description[sizeof(h->description) - 1] = '\0';
     
     h->frequency_type = lv_dropdown_get_selected(dd_frequency);
-    
     if (h->frequency_type == 1) {
         h->num_days = selected_custom_dates_count;
-        
         for (int i = 0; i < selected_custom_dates_count && i < 31; i++) {
             h->custom_dates[i].year = selected_custom_dates[i].year;
             h->custom_dates[i].month = selected_custom_dates[i].month;
@@ -786,16 +761,14 @@ static void save_current_habit(void)
     }
 }
 
-habit_t* ui_manage_habits_get_habit(uint16_t index)
-{
+habit_t* ui_manage_habits_get_habit(uint16_t index) {
     if (index < habit_count) {
         return &habits[index];
     }
     return NULL;
 }
 
-void ui_manage_habits_mark_completed(uint16_t index, bool completed)
-{
+void ui_manage_habits_mark_completed(uint16_t index, bool completed) {
     if (index < habit_count) {
         habit_t *h = &habits[index];
         time_t now = time(NULL);
@@ -803,17 +776,15 @@ void ui_manage_habits_mark_completed(uint16_t index, bool completed)
         if (completed) {
             time_t last_completion = (time_t)h->last_completed_date;
             int days_diff = (now - last_completion) / (24 * 60 * 60);
-            
+
             time_t skip_reset = (time_t)h->skip_days_reset_date;
             int days_since_reset = (now - skip_reset) / (24 * 60 * 60);
-            
             if (days_since_reset >= 14) {
                 h->skip_days_used = 0;
                 h->skip_days_reset_date = (uint32_t)now;
             }
             
             int days_missed = (days_diff > 1) ? days_diff - 1 : 0;
-            
             if (h->skip_days_used + days_missed <= 2) {
                 h->skip_days_used += days_missed;
                 h->streak_count++;
@@ -833,17 +804,15 @@ void ui_manage_habits_mark_completed(uint16_t index, bool completed)
     }
 }
 
-uint8_t ui_manage_habits_get_remaining_skips(const habit_t *habit)
-{
-    if (!habit) return 0;
-    
+uint8_t ui_manage_habits_get_remaining_skips(const habit_t *habit) {
+    if (!habit) {
+        return 0;
+    }
     time_t now = time(NULL);
     time_t skip_reset = (time_t)habit->skip_days_reset_date;
     int days_since_reset = (now - skip_reset) / (24 * 60 * 60);
-    
     if (days_since_reset >= 14) {
         return 2;
     }
-    
     return (2 - habit->skip_days_used);
 }

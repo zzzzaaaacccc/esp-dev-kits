@@ -28,8 +28,7 @@ static void calculate_statistics(uint16_t *completed, uint16_t *started, uint16_
 static void draw_circular_progress(lv_obj_t *parent, int16_t x, int16_t y, uint16_t percentage);
 static void get_monthly_completion_data(int *completion_rates, int *days_in_month);
 
-void ui_habit_tracker_statistics_init(void)
-{
+void ui_habit_tracker_statistics_init(void) {
     lv_obj_t *obj_page = ui_page_get_obj();
     
     stats_container = lv_obj_create(obj_page, NULL);
@@ -37,13 +36,12 @@ void ui_habit_tracker_statistics_init(void)
     lv_obj_align(stats_container, NULL, LV_ALIGN_IN_RIGHT_MID, -40, 30);
     lv_obj_set_hidden(stats_container, true);
     
-    // statistics title label
     lv_obj_t *main_title = lv_label_create(stats_container, NULL);
     lv_label_set_text(main_title, "Statistics");
     lv_obj_align(main_title, NULL, LV_ALIGN_IN_TOP_MID, 0, 10);
     lv_obj_set_style_local_text_font(main_title, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &font_en_bold_20);
     
-    // tab button matrix for view selection
+    // buttons
     static const char *tab_map[] = {"Overview", "Trends", "Habits", ""};
     view_tabs = lv_btnmatrix_create(stats_container, NULL);
     lv_btnmatrix_set_map(view_tabs, tab_map);
@@ -53,7 +51,6 @@ void ui_habit_tracker_statistics_init(void)
     lv_btnmatrix_set_btn_ctrl(view_tabs, 0, LV_BTNMATRIX_CTRL_CHECKABLE);
     lv_btnmatrix_set_one_check(view_tabs, true);
     
-    // content area for different views
     content_area = lv_obj_create(stats_container, NULL);
     lv_obj_set_size(content_area, 480, 230);
     lv_obj_align(content_area, view_tabs, LV_ALIGN_OUT_BOTTOM_MID, 0, 5);
@@ -65,23 +62,20 @@ void ui_habit_tracker_statistics_init(void)
     create_habits_view();
 }
 
-void ui_habit_tracker_statistics_show(void)
-{
+void ui_habit_tracker_statistics_show(void) {
     if (stats_container) {
         lv_obj_set_hidden(stats_container, false);
         ui_habit_tracker_statistics_refresh();
     }
 }
 
-void ui_habit_tracker_statistics_hide(void)
-{
+void ui_habit_tracker_statistics_hide(void) {
     if (stats_container) {
         lv_obj_set_hidden(stats_container, true);
     }
 }
 
-void ui_habit_tracker_statistics_refresh(void)
-{   
+void ui_habit_tracker_statistics_refresh(void) {
     if (overview_view) {
         lv_obj_del(overview_view);
         overview_view = NULL;
@@ -94,49 +88,63 @@ void ui_habit_tracker_statistics_refresh(void)
         lv_obj_del(habits_view);
         habits_view = NULL;
     }
-    
     create_overview_view();
     create_trends_view();
     create_habits_view();
-    
     switch (current_view) {
         case STATS_VIEW_OVERVIEW:
-            if (overview_view) lv_obj_set_hidden(overview_view, false);
+            if (overview_view) {
+                lv_obj_set_hidden(overview_view, false);
+            } 
             break;
         case STATS_VIEW_TRENDS:
-            if (trends_view) lv_obj_set_hidden(trends_view, false);
+            if (trends_view) {
+                lv_obj_set_hidden(trends_view, false);
+            } 
             break;
         case STATS_VIEW_HABITS:
-            if (habits_view) lv_obj_set_hidden(habits_view, false);
+            if (habits_view) {
+                lv_obj_set_hidden(habits_view, false);
+            } 
             break;
     }
 }
 
-void ui_habit_tracker_statistics_set_view(stats_view_type_t view)
-{
+void ui_habit_tracker_statistics_set_view(stats_view_type_t view) {
     current_view = view;
-    
-    if (overview_view) lv_obj_set_hidden(overview_view, true);
-    if (trends_view) lv_obj_set_hidden(trends_view, true);
-    if (habits_view) lv_obj_set_hidden(habits_view, true);
+    if (overview_view) { 
+        lv_obj_set_hidden(overview_view, true);
+    }
+    if (trends_view) { 
+        lv_obj_set_hidden(trends_view, true);
+    }
+    if (habits_view) { 
+        lv_obj_set_hidden(habits_view, true);
+    }
     
     switch (view) {
         case STATS_VIEW_OVERVIEW:
-            if (overview_view) lv_obj_set_hidden(overview_view, false);
+            if (overview_view) { 
+                lv_obj_set_hidden(overview_view, false); 
+            }
             if (view_tabs) {
                 lv_btnmatrix_clear_btn_ctrl_all(view_tabs, LV_BTNMATRIX_CTRL_CHECK_STATE);
                 lv_btnmatrix_set_btn_ctrl(view_tabs, 0, LV_BTNMATRIX_CTRL_CHECK_STATE);
             }
             break;
         case STATS_VIEW_TRENDS:
-            if (trends_view) lv_obj_set_hidden(trends_view, false);
+            if (trends_view) { 
+                lv_obj_set_hidden(trends_view, false); 
+            }
             if (view_tabs) {
                 lv_btnmatrix_clear_btn_ctrl_all(view_tabs, LV_BTNMATRIX_CTRL_CHECK_STATE);
                 lv_btnmatrix_set_btn_ctrl(view_tabs, 1, LV_BTNMATRIX_CTRL_CHECK_STATE);
             }
             break;
         case STATS_VIEW_HABITS:
-            if (habits_view) lv_obj_set_hidden(habits_view, false);
+            if (habits_view) { 
+                lv_obj_set_hidden(habits_view, false); 
+            }
             if (view_tabs) {
                 lv_btnmatrix_clear_btn_ctrl_all(view_tabs, LV_BTNMATRIX_CTRL_CHECK_STATE);
                 lv_btnmatrix_set_btn_ctrl(view_tabs, 2, LV_BTNMATRIX_CTRL_CHECK_STATE);
@@ -146,8 +154,7 @@ void ui_habit_tracker_statistics_set_view(stats_view_type_t view)
 }
 
 // month/year navigation button callbacks
-static void prev_month_btn_cb(lv_obj_t *obj, lv_event_t event)
-{
+static void prev_month_btn_cb(lv_obj_t *obj, lv_event_t event) {
     if (event == LV_EVENT_CLICKED) {
         if (displayed_month == -1) {
             time_t now = time(NULL);
@@ -155,7 +162,6 @@ static void prev_month_btn_cb(lv_obj_t *obj, lv_event_t event)
             displayed_month = tm_info->tm_mon;
             displayed_year = tm_info->tm_year + 1900;
         }
-        
         displayed_month--;
         if (displayed_month < 0) {
             displayed_month = 11;
@@ -165,8 +171,7 @@ static void prev_month_btn_cb(lv_obj_t *obj, lv_event_t event)
     }
 }
 
-static void next_month_btn_cb(lv_obj_t *obj, lv_event_t event)
-{
+static void next_month_btn_cb(lv_obj_t *obj, lv_event_t event) {
     if (event == LV_EVENT_CLICKED) {
         if (displayed_month == -1) {
             time_t now = time(NULL);
@@ -174,7 +179,6 @@ static void next_month_btn_cb(lv_obj_t *obj, lv_event_t event)
             displayed_month = tm_info->tm_mon;
             displayed_year = tm_info->tm_year + 1900;
         }
-        
         displayed_month++;
         if (displayed_month > 11) {
             displayed_month = 0;
@@ -185,30 +189,41 @@ static void next_month_btn_cb(lv_obj_t *obj, lv_event_t event)
 }
 
 // button event callback handler
-static void tab_event_cb(lv_obj_t *obj, lv_event_t event)
-{
+static void tab_event_cb(lv_obj_t *obj, lv_event_t event) {
     if (event == LV_EVENT_CLICKED) {
         uint16_t tab_id = lv_btnmatrix_get_active_btn(obj);
         lv_btnmatrix_clear_btn_ctrl_all(obj, LV_BTNMATRIX_CTRL_CHECK_STATE);
         
-        if (overview_view) lv_obj_set_hidden(overview_view, true);
-        if (trends_view) lv_obj_set_hidden(trends_view, true);
-        if (habits_view) lv_obj_set_hidden(habits_view, true);
+        if (overview_view) { 
+            lv_obj_set_hidden(overview_view, true);
+        }
+        if (trends_view) { 
+            lv_obj_set_hidden(trends_view, true);
+        }
+        if (habits_view) { 
+            lv_obj_set_hidden(habits_view, true);
+        }
         
         switch (tab_id) {
             case 0: 
                 current_view = STATS_VIEW_OVERVIEW;
-                if (overview_view) lv_obj_set_hidden(overview_view, false);
+                if (overview_view) { 
+                    lv_obj_set_hidden(overview_view, false);
+                }
                 lv_btnmatrix_set_btn_ctrl(obj, 0, LV_BTNMATRIX_CTRL_CHECK_STATE);
                 break;
             case 1: 
                 current_view = STATS_VIEW_TRENDS;
-                if (trends_view) lv_obj_set_hidden(trends_view, false);
+                if (trends_view) { 
+                    lv_obj_set_hidden(trends_view, false);
+                }
                 lv_btnmatrix_set_btn_ctrl(obj, 1, LV_BTNMATRIX_CTRL_CHECK_STATE);
                 break;
             case 2: 
                 current_view = STATS_VIEW_HABITS;
-                if (habits_view) lv_obj_set_hidden(habits_view, false);
+                if (habits_view) { 
+                    lv_obj_set_hidden(habits_view, false);
+                }
                 lv_btnmatrix_set_btn_ctrl(obj, 2, LV_BTNMATRIX_CTRL_CHECK_STATE);
                 break;
         }
@@ -216,8 +231,7 @@ static void tab_event_cb(lv_obj_t *obj, lv_event_t event)
 }
 
 // get current day of week (0=mon, 6=sun)
-static int get_current_day_of_week(void)
-{
+static int get_current_day_of_week(void) {
     time_t now = time(NULL);
     struct tm *tm_info = localtime(&now);
     int day = tm_info->tm_wday;
@@ -225,10 +239,10 @@ static int get_current_day_of_week(void)
 }
 
 // check if habit is scheduled for today
-static bool is_habit_scheduled_today(const habit_t *habit, int day_of_week)
-{
-    if (!habit->is_active) return false;
-    
+static bool is_habit_scheduled_today(const habit_t *habit, int day_of_week) {
+    if (!habit->is_active) {
+        return false;
+    } 
     if (habit->frequency_type == 0) {
         // weekly: check if today's day is selected
         return habit->days_selected[day_of_week];
@@ -236,13 +250,11 @@ static bool is_habit_scheduled_today(const habit_t *habit, int day_of_week)
         // custom: check if today's date matches any custom date
         return false;
     }
-    
     return false;
 }
 
 // overall stats, today's completion rate for overview tab
-static void calculate_statistics(uint16_t *completed, uint16_t *started, uint16_t *not_done, uint16_t *completion_rate)
-{
+static void calculate_statistics(uint16_t *completed, uint16_t *started, uint16_t *not_done, uint16_t *completion_rate) {
     *completed = 0;
     *started = 0;
     *not_done = 0;
@@ -261,13 +273,13 @@ static void calculate_statistics(uint16_t *completed, uint16_t *started, uint16_
     time_t today_start = mktime(timeinfo);
     
     int current_day = get_current_day_of_week();
-    
     uint16_t total_today_habits = 0;
     
     for (uint16_t i = 0; i < 100; i++) {
         habit_t *habit = ui_manage_habits_get_habit(i);
-        if (habit == NULL) break;
-        
+        if (habit == NULL) {
+            break;
+        }
         if (habit && is_habit_scheduled_today(habit, current_day)) {
             total_today_habits++;
             
@@ -308,7 +320,7 @@ static void calculate_statistics(uint16_t *completed, uint16_t *started, uint16_
                         time_has_passed = false;
                         break;
                 }
-                
+            
                 if (time_has_passed) {
                     // time passed but not completed
                     (*started)++;
@@ -329,9 +341,7 @@ static void calculate_statistics(uint16_t *completed, uint16_t *started, uint16_
 }
 
 // circular progress indicator for overview tab
-static void draw_circular_progress(lv_obj_t *parent, int16_t x, int16_t y, uint16_t percentage)
-{
-    // cont for circle
+static void draw_circular_progress(lv_obj_t *parent, int16_t x, int16_t y, uint16_t percentage) {
     lv_obj_t *circle_cont = lv_obj_create(parent, NULL);
     lv_obj_set_size(circle_cont, 180, 180);
     lv_obj_align(circle_cont, NULL, LV_ALIGN_IN_TOP_MID, x, y);
@@ -359,7 +369,6 @@ static void draw_circular_progress(lv_obj_t *parent, int16_t x, int16_t y, uint1
     lv_obj_set_style_local_line_color(arc_progress, LV_ARC_PART_INDIC, LV_STATE_DEFAULT, LV_COLOR_MAKE(0, 150, 255));
     lv_obj_set_style_local_line_width(arc_progress, LV_ARC_PART_BG, LV_STATE_DEFAULT, 0);
     
-    // percetnage txt centre
     lv_obj_t *label_percent = lv_label_create(circle_cont, NULL);
     char buf[10];
     snprintf(buf, sizeof(buf), "%d%%", percentage);
@@ -367,7 +376,6 @@ static void draw_circular_progress(lv_obj_t *parent, int16_t x, int16_t y, uint1
     lv_obj_align(label_percent, NULL, LV_ALIGN_CENTER, 0, -10);
     lv_obj_set_style_local_text_font(label_percent, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &font_en_20);
     
-    // "Completion Rate" text
     lv_obj_t *label_text = lv_label_create(circle_cont, NULL);
     lv_label_set_text(label_text, "COMPLETION\nRATE");
     lv_obj_align(label_text, label_percent, LV_ALIGN_OUT_BOTTOM_MID, 0, 5);
@@ -376,8 +384,7 @@ static void draw_circular_progress(lv_obj_t *parent, int16_t x, int16_t y, uint1
 }
 
 // get monthly completion data for trends tab
-static void get_monthly_completion_data(int *completion_rates, int *days_in_month)
-{
+static void get_monthly_completion_data(int *completion_rates, int *days_in_month) {
     time_t now = time(NULL);
     struct tm *tm_info = localtime(&now);
     
@@ -409,8 +416,7 @@ static void get_monthly_completion_data(int *completion_rates, int *days_in_mont
 
 
 // arc progress indicator for trends tab
-static void draw_completion_indicator(lv_obj_t *parent, int16_t x, int16_t y, int completion_rate)
-{
+static void draw_completion_indicator(lv_obj_t *parent, int16_t x, int16_t y, int completion_rate) {
     // background arc
     lv_obj_t *arc_bg = lv_arc_create(parent, NULL);
     lv_obj_set_size(arc_bg, 56, 56);  // Much larger for better visibility
@@ -430,7 +436,6 @@ static void draw_completion_indicator(lv_obj_t *parent, int16_t x, int16_t y, in
         lv_obj_align(arc_progress, NULL, LV_ALIGN_IN_TOP_LEFT, x, y);
         lv_arc_set_bg_angles(arc_progress, 0, 360);
         
-        // calc angle based on completion percentage
         uint16_t end_angle = (completion_rate * 360) / 100;
         lv_arc_set_angles(arc_progress, 270, 270 + end_angle);
         
@@ -443,9 +448,7 @@ static void draw_completion_indicator(lv_obj_t *parent, int16_t x, int16_t y, in
 }
 
 // trends view (calendar)
-static void create_trends_view(void)
-{
-    // scrollable container
+static void create_trends_view(void) {
     trends_view = lv_page_create(content_area, NULL);
     lv_obj_set_size(trends_view, 480, 230);
     lv_obj_align(trends_view, NULL, LV_ALIGN_CENTER, 0, 0);
@@ -473,23 +476,19 @@ static void create_trends_view(void)
     display_tm.tm_mday = 1;
     mktime(&display_tm);
     
-    // title bar with navigation
     lv_obj_t *title_cont = lv_obj_create(trends_view, NULL);
     lv_obj_set_size(title_cont, 450, 35);
     lv_obj_set_style_local_bg_opa(title_cont, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_OPA_TRANSP);
     lv_obj_set_style_local_border_width(title_cont, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, 0);
     
-    // prev month button
     lv_obj_t *prev_btn = lv_btn_create(title_cont, NULL);
     lv_obj_set_size(prev_btn, 35, 30);
     lv_obj_align(prev_btn, NULL, LV_ALIGN_IN_LEFT_MID, 5, 0);
     lv_obj_set_event_cb(prev_btn, prev_month_btn_cb);
-    
     lv_obj_t *prev_label = lv_label_create(prev_btn, NULL);
     lv_label_set_text(prev_label, "<");
     lv_obj_set_style_local_text_font(prev_label, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &font_en_bold_20);
     
-    // month/year title
     lv_obj_t *title = lv_label_create(title_cont, NULL);
     char title_buf[30];
     const char *months[] = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
@@ -498,17 +497,14 @@ static void create_trends_view(void)
     lv_obj_align(title, NULL, LV_ALIGN_IN_TOP_MID, 0, 5);
     lv_obj_set_style_local_text_font(title, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &font_en_bold_20);
     
-    // next month button
     lv_obj_t *next_btn = lv_btn_create(title_cont, NULL);
     lv_obj_set_size(next_btn, 35, 30);
     lv_obj_align(next_btn, NULL, LV_ALIGN_IN_RIGHT_MID, -5, 0);
     lv_obj_set_event_cb(next_btn, next_month_btn_cb);
-    
     lv_obj_t *next_label = lv_label_create(next_btn, NULL);
     lv_label_set_text(next_label, ">");
     lv_obj_set_style_local_text_font(next_label, LV_LABEL_PART_MAIN, LV_STATE_DEFAULT, &font_en_bold_20);
     
-    // calendar container
     lv_obj_t *calendar_cont = lv_obj_create(trends_view, NULL);
     lv_obj_set_size(calendar_cont, 450, 300); 
     lv_obj_set_style_local_bg_opa(calendar_cont, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_OPA_TRANSP);
@@ -556,8 +552,7 @@ static void create_trends_view(void)
 }
 
 // indv habits view
-static void create_habits_view(void)
-{
+static void create_habits_view(void) {
     habits_view = lv_page_create(content_area, NULL);
     lv_obj_set_size(habits_view, 480, 230);
     lv_obj_align(habits_view, NULL, LV_ALIGN_CENTER, 0, 0);
@@ -572,7 +567,9 @@ static void create_habits_view(void)
     
     for (uint16_t i = 0; i < 100; i++) {
         habit_t *habit = ui_manage_habits_get_habit(i);
-        if (habit == NULL) break;
+        if (habit == NULL) {
+            break;
+        }
         // need to get from cloud/database -> habit list and properties (name, is_active)
         if (habit && habit->is_active) {
             lv_obj_t *btn = lv_list_add_btn(habit_list, LV_SYMBOL_CHARGE, "");
@@ -603,8 +600,7 @@ static void create_habits_view(void)
 }
 
 // overview view 
-static void create_overview_view(void)
-{
+static void create_overview_view(void) {
     overview_view = lv_list_create(content_area, NULL);
     lv_obj_set_size(overview_view, 480, 230);
     lv_obj_align(overview_view, NULL, LV_ALIGN_CENTER, 0, 0);
@@ -621,7 +617,6 @@ static void create_overview_view(void)
     lv_obj_set_height(rate_btn, 200);
     lv_btn_set_layout(rate_btn, LV_LAYOUT_OFF);
     
-    // circular progress
     lv_obj_t *circle_cont = lv_obj_create(rate_btn, NULL);
     lv_obj_set_size(circle_cont, 180, 180);
     lv_obj_set_style_local_bg_opa(circle_cont, LV_OBJ_PART_MAIN, LV_STATE_DEFAULT, LV_OPA_TRANSP);

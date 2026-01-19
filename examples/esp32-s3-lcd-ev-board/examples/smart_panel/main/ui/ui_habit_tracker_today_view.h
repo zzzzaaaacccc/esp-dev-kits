@@ -11,9 +11,9 @@ extern "C" {
 void ui_today_view_init(void);
 void ui_today_view_show(void);
 void ui_today_view_hide(void);
-
-// sync with updated habits
 void ui_today_view_refresh(void);
+void ui_today_view_schedule_habit_notifications(void);
+void ui_today_view_update_notifications(void);
 
 #ifdef __cplusplus
 }

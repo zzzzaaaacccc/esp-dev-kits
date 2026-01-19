@@ -2,8 +2,8 @@ idf_component_register(
     SRC_DIRS
         "."
         "app"
-        "icon"
         "ui"
+        "icon"
         "lv_fonts"
     INCLUDE_DIRS
     "."
