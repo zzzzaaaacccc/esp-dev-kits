@@ -110,3 +110,18 @@ Click one of the development boards shown below to set up and start using esp-de
     - Visit our WeChat Account **espressif_systems** to learn more about how to buy our products.
     - If you need help in choosing a desired development board, [ESP Product Selector](https://products.espressif.com/#/product-selector?names=) is a place for you to visit.
     - Contact us at [Sales Questions](http://www.espressif.com/en/company/contact/pre-sale-questions-crm) if you have any sales-related question about our products.
+
+
+## Open Source Licensing
+
+This repository is distributed under multiple open source licenses, depending on the type of content:
+
+- **Code**: All code files (unless otherwise specified) are licensed under the [Apache License 2.0](./LICENSE-APACHE). This allows commercial use, modification, and redistribution, provided that the original copyright notice and a description of any changes are retained.
+- **Documentation**: All documentation content in this repository (including text, diagrams, and images) is licensed under the [Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)](./LICENSE-CC-BY-SA).
+
+Under the CC BY-SA 4.0 license, you are free to reuse, adapt, and share the documentation, as long as you meet the following conditions:
+
+- Attribute the original source (e.g., link to this repository or specific documentation pages)
+- Provide a link to the license
+- Indicate whether any changes were made
+- Distribute derivative works under the same license
