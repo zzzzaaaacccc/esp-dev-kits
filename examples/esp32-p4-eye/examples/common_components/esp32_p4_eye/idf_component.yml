@@ -9,7 +9,7 @@ tags:
   - bsp  
 
 dependencies:
-  idf: ">=5.4"
+  idf: ">=5.5.3"
   lvgl/lvgl: "^8"
 
   espressif/esp_lvgl_port:

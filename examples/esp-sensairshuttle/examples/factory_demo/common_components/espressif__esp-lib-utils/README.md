@@ -81,7 +81,7 @@ For installation of the `esp-lib-utils` library, refer to [How to Install esp-li
 
 #### Configuration Instructions
 
-Below are detailed instructions on how to configure `esp-lib-utils`. They are optional operations and are configured through the [esp_utils_conf.h](../esp_utils_conf.h) file with the following characteristics:
+Below are detailed instructions on how to configure `esp-lib-utils`. They are optional operations and are configured through the [esp_utils_conf.h](esp_utils_conf.h) file with the following characteristics:
 
 1. The path sequence to search for the *esp_utils_conf.h* file is: `Current Project Directory` > `Arduino Library Directory` > `esp-lib-utils Directory`.
 3. **If a project needs to use a separate configuration**, users can copy it from the root directory of `esp-lib-utils` to the project.

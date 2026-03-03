@@ -2,13 +2,13 @@
 
 [中文版本](./README_CN.md)
 
-This example is based on ESP32-P4-EYE and demonstrates a comprehensive mini camera application that supports photo capture, timed photo capture, video recording, album preview, USB SD card mounting, and image parameter settings (with adjustable resolution, saturation, contrast, brightness, and hue). Building on this foundation, the application also integrates face detection, pedestrian detection, and YOLOv11 nano model-based object detection capabilities, enhancing intelligent visual recognition. The project comprehensively utilizes various peripheral resources of the development board, including MIPI-CSI camera interface, SPI LCD display interface, USB High-Speed interface, button input, rotary encoder, and SD card storage.
+This example is based on ESP32-P4X-EYE and demonstrates a comprehensive mini camera application that supports photo capture, timed photo capture, video recording, album preview, USB SD card mounting, and image parameter settings (with adjustable resolution, saturation, contrast, brightness, and hue). Building on this foundation, the application also integrates face detection, pedestrian detection, and YOLOv11 nano model-based object detection capabilities, enhancing intelligent visual recognition. The project comprehensively utilizes various peripheral resources of the development board, including MIPI-CSI camera interface, SPI LCD display interface, USB High-Speed interface, button input, rotary encoder, and SD card storage.
 
 ## Quick Start
 
 ### Prerequisites
 
-* An ESP32-P4-EYE development board.
+* An ESP32-P4X-EYE development board.
 * A USB-C cable for power supply and programming.
 * An SD card for storing photos and videos (optional)
 
@@ -36,24 +36,26 @@ Run ``idf.py menuconfig`` and modify the ``Board Support Package`` configuration
 menuconfig > Component config > Board Support Package
 ```
 
+If you are using the original ESP32-P4 chip, enable `ESP32P4_SELECTS_REV_LESS_V3` in `idf.py menuconfig`.
+
 ## How to Use the Example
 
 ### Apply Patch
 
-* When the pixel clock is set to 80MHz, the default SPI clock source may temporarily fail to meet timing requirements. To address this, please follow these steps to apply the patch file `0004-fix-spi-default-clock-source.patch`:
+* The patch file `0001-feat-sdmmc-Accelerate-SD-card-read-write-speed.patch` is used to optimize SD card read/write performance. It is based on IDF release/v5.5 commit: 82e525ef3e8e6528c95b67dd634c9cc2f5d0c3b7. Please follow these steps to apply it:
 
-1. Change to the ESP-IDF root directory and check out the specific version (the patch is designed for IDF release/v5.5 commit:98cd765953dfe0e7bb1c5df8367e1b54bd966cce):
+1. Change to the ESP-IDF root directory and check out the specific version:
 
 ```bash
 cd ~/esp-idf
 git checkout release/v5.5
-git checkout 98cd765953dfe0e7bb1c5df8367e1b54bd966cce
+git checkout 82e525ef3e8e6528c95b67dd634c9cc2f5d0c3b7
 ```
 
 2. Copy the patch file to the ESP-IDF root directory, for example:
 
 ```bash
-cp 0004-fix-spi-default-clock-source.patch ~/esp-idf/
+cp 0001-feat-sdmmc-Accelerate-SD-card-read-write-speed.patch ~/esp-idf/
 ```
 
 3. Change to the ESP-IDF root directory:
@@ -65,10 +67,8 @@ cd ~/esp-idf
 4. Apply the patch using the following command:
 
 ```bash
-git apply 0004-fix-spi-default-clock-source.patch
+git apply 0001-feat-sdmmc-Accelerate-SD-card-read-write-speed.patch
 ```
-
-* If you experience significant lag during photo capture or video recording, you can try applying the patch file `0004-fix-sdmmc-aligned-write-buffer.patch` using the same method as above.
 
 ### Compile and Flash the Example
 

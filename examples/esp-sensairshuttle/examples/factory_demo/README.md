@@ -1,15 +1,15 @@
-# ESP-Sensairshuttle Factory Demo
+# ESP-SensairShuttle Factory Demo
 
 [中文版本](./README_CN.md)
 
 ## Overview
 
-This example demonstrates a full-featured system running on the ESP32-Sensairshuttle development board, powered by the ESP-Brookesia framework. It showcases an app-based UI management system with multiple demo applications, including compass, temperature & air quality monitoring, gesture recognition, and more.
+This example demonstrates a full-featured system running on the ESP32-SensairShuttle development board, powered by the ESP-Brookesia framework. It showcases an app-based UI management system with multiple demo applications, including compass, temperature & air quality monitoring, gesture recognition, and more.
 
 ## Hardware Requirements
 
 ### Supported Boards
-- **ESP32-Sensairshuttle** 
+- **ESP32-SensairShuttle**
 
 ### Required Sensors
 - **BMI270** - 6-axis IMU (Accelerometer + Gyroscope)
@@ -25,7 +25,7 @@ Default I2C pins (can be configured in board YAML):
 ## Software Requirements
 
 ### ESP-IDF Version
-- **Recommended version**: IDF release/v5.5 (ESP-IDF v5.5.2-227-g913c2b4f10)
+- ESP-IDF release/v5.5 and all bugfix releases
 
 ### Dependencies
 - `esp_board_manager` - Hardware abstraction layer
@@ -35,7 +35,7 @@ Default I2C pins (can be configured in board YAML):
 
 ## Getting Started
 
-### 1. Clone the Repository
+### 1. Enter the example directory
 
 ```bash
 cd examples/esp-sensairshuttle/examples/factory_demo
@@ -43,38 +43,33 @@ cd examples/esp-sensairshuttle/examples/factory_demo
 
 ### 2. Set up ESP-IDF Environment
 
-Follow the [ESP-IDF Getting Started Guide](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/index.html) to set up the development environment.
+Follow the [ESP-IDF Getting Started Guide](https://docs.espressif.com/projects/esp-idf/en/latest/esp32c5/get-started/index.html) to set up the development environment.
 
 ```bash
 . $HOME/esp/esp-idf/export.sh
 ```
 
-### 3. Configure the Project
+### 3. Configure Board (Important)
+
+#### Ubuntu
 
 ```bash
-idf.py set-target esp32c5
-idf.py menuconfig
-```
-
-### 4. Configure Board (Important)
-
-```bash
-# Set board manager path
-export IDF_EXTRA_ACTIONS_PATH=./managed_components/espressif__esp_board_manager
-
 # Generate board configuration
 idf.py gen-bmgr-config -c ./boards -b esp_SensairShuttle
 ```
 
-### 5. Build and Flash
+#### Windows
+
+```bat
+idf.py gen-bmgr-config -c .\boards -b esp_SensairShuttle
+```
+
+### 4. Build and Flash
 
 ```bash
 # Build the project
 idf.py build
 
-# Before flashing, put the device into download mode:
-# - Briefly press the PWR button to power off the board
-# - Hold the BOOT button and then press the PWR button to power on the board
 # Flash to device (replace PORT with your serial port)
 idf.py -p PORT flash monitor
 ```
@@ -101,74 +96,70 @@ To exit the serial monitor, type `Ctrl-]`.
 
 ### Environment (Requires BME690 sensor sub-board to be inserted)
 
-    Displays current environmental temperature, relative humidity, pressure, and air quality.
+Displays current environmental temperature, relative humidity, pressure, and air quality.
 
-    - **Relative Humidity Interface**: Displays relative humidity and comfort level emoji (emoji color changes based on comfort level)
+- **Relative Humidity Interface**: Displays relative humidity and comfort level emoji (emoji color changes based on comfort level)
+  - 30-60%: ^_^ (Comfortable, displayed in green)
+  - 20-30% or 60-70%: 0_0 (Normal, displayed in yellow)
+  - <20% or >70%: T_T (Uncomfortable, displayed in orange)
 
-        - 30-60%: ^_^ (Comfortable, displayed in green)
-        - 20-30% or 60-70%: 0_0 (Normal, displayed in yellow)
-        - <20% or >70%: T_T (Uncomfortable, displayed in orange)
+- **Pressure Interface**: Displays current pressure and inferred weather (weather text color changes based on pressure)
+  - >1018.25 hPa (Standard pressure 1013.25 hPa + 5.0 hPa): Maybe Sunny (Possible sunny, displayed in green)
+  - <1008.25 hPa (Standard pressure 1013.25 hPa - 5.0 hPa): Maybe Rainy (Possible rainy, displayed in red)
+  - 1008.25-1018.25 hPa: Good (Normal, displayed in gray)
 
-    - **Pressure Interface**: Displays current pressure and inferred weather (weather text color changes based on pressure)
-
-        - >1018.25 hPa (Standard pressure 1013.25 hPa + 5.0 hPa): Maybe Sunny (Possible sunny, displayed in green)
-        - <1008.25 hPa (Standard pressure 1013.25 hPa - 5.0 hPa): Maybe Rainy (Possible rainy, displayed in red)
-        - 1008.25-1018.25 hPa: Good (Normal, displayed in gray)
-
-    - **Air Quality Interface**: Displays Indoor Air Quality Index (IAQ) and CO2 equivalent concentration (IAQ value and level text color change based on air quality level).
-
-        - **IAQ Display**: 0-500 range mapped to 0-100% display, lower values indicate better air quality. The interface displays English level text (color changes based on level)
-            - 0-50: Excellent (Excellent, displayed in green)
-            - 51-100: Good (Good, displayed in light green)
-            - 101-150: Fair (Normal, displayed in yellow)
-            - 151-200: Poor (Poor, displayed in orange)
-            - 201-300: Bad (Bad, displayed in red)
-            - 301-500: Very Bad (Very bad, displayed in dark red)
-        - **CO2 Equivalent Concentration**: Displays estimated CO2 concentration (unit: ppm), value color changes based on current IAQ level (consistent with level text color).
-        - **Usage Instructions**:
-            - Air quality is implemented through the BSEC algorithm of the BME690 sensor. First use requires 5-30 minutes to collect initial data. IAQ value accuracy improves after 15-30 minutes
-            - After running for 4-24 hours, IAQ accuracy reaches maximum and values are most reliable. Keep the application running continuously to maintain calibration state. Keep away from heat sources, strong airflow, and chemicals for best performance
+- **Air Quality Interface**: Displays Indoor Air Quality Index (IAQ) and CO2 equivalent concentration (IAQ value and level text color change based on air quality level).
+  - **IAQ Display**: 0-500 range mapped to 0-100% display, lower values indicate better air quality. The interface displays English level text (color changes based on level)
+    - 0-50: Excellent (Excellent, displayed in green)
+    - 51-100: Good (Good, displayed in light green)
+    - 101-150: Fair (Normal, displayed in yellow)
+    - 151-200: Poor (Poor, displayed in orange)
+    - 201-300: Bad (Bad, displayed in red)
+    - 301-500: Very Bad (Very bad, displayed in dark red)
+  - **CO2 Equivalent Concentration**: Displays estimated CO2 concentration (unit: ppm), value color changes based on current IAQ level (consistent with level text color).
+  - **Usage Instructions**:
+    - Air quality is implemented through the BSEC algorithm of the BME690 sensor. First use requires 5-30 minutes to collect initial data. IAQ value accuracy improves after 15-30 minutes
+    - After running for 4-24 hours, IAQ accuracy reaches maximum and values are most reliable. Keep the application running continuously to maintain calibration state. Keep away from heat sources, strong airflow, and chemicals for best performance
 
 ### Gesture Detect (Requires BMI270 & BMM350 sensor sub-boards to be inserted)
 
-    Detects the current motion state of the development board and displays the following categories.
+Detects the current motion state of the development board and displays the following categories.
 
-    - **Roll**: Detects device roll action (angle >90°). When roll is detected, the interface displays the current device's absolute orientation information, such as "X Down [vvv]", "Y Up [<<<]", "Z Down [X]", etc., where arrow symbols (such as [^^^], [vvv], [>>>], [<<<], [X], [O]) indicate roll direction. Supported orientations include: X Up/Down, Y Up/Down, Z Up/Down.
-
-    - **Shake**: Detects device shake action. When shake is detected, the interface displays the coordinate axis information where the shake action was detected, such as "Shake heavy on X", "Shake slight on Y/Z", etc. It can display a single coordinate axis (X, Y, Z) or combinations of multiple coordinate axes (such as X/Y, Y/Z, X/Y/Z), and distinguishes between heavy shake and slight shake.
+- **Roll**: Detects device roll action (angle >90°). When roll is detected, the interface displays the current device's absolute orientation information, such as "X Down [vvv]", "Y Up [<<<]", "Z Down [X]", etc., where arrow symbols (such as [^^^], [vvv], [>>>], [<<<], [X], [O]) indicate roll direction. Supported orientations include: X Up/Down, Y Up/Down, Z Up/Down.
+- **Shake**: Detects device shake action. When shake is detected, the interface displays the coordinate axis information where the shake action was detected, such as "Shake heavy on X", "Shake slight on Y/Z", etc. It can display a single coordinate axis (X, Y, Z) or combinations of multiple coordinate axes (such as X/Y, Y/Z, X/Y/Z), and distinguishes between heavy shake and slight shake.
 
 ### Compass (Requires BMI270 & BMM350 sensor sub-boards to be inserted)
 
-    Implements compass functionality. Keep level and away from magnetic interference sources.
+Implements compass functionality. Keep level and away from magnetic interference sources.
 
-    - **First-time Calibration**:
-        1. Launch the Compass app from the home screen
-        2. Follow the on-screen instructions for calibration
-        3. Slowly rotate the device in **all directions** (figure-8 pattern)
-        4. Ensure coverage of all spatial orientations. Calibration requires at least 500 samples
+- **First-time Calibration**:
+  1. Launch the Compass app from the home screen
+  2. Follow the on-screen instructions for calibration
+  3. Slowly rotate the device in **all directions** (figure-8 pattern)
+  4. Ensure coverage of all spatial orientations. Calibration requires at least 500 samples
 
-    - **Recalibration**:
-        - **Long press screen**: Long press on the compass interface to recalibrate
-        - **Auto-save**: After calibration is complete, hard/soft iron parameters and status are written to NVS and automatically restored after restart
+- **Recalibration**:
+  - **Long press screen**: Long press on the compass interface to recalibrate
+  - **Auto-save**: After calibration is complete, hard/soft iron parameters and status are written to NVS and automatically restored after restart
 
-    - **Using the Compass**:
-        - The pointer will automatically point to magnetic north
-        - Tilt compensation ensures accurate display even when the device is not level
-        - Real-time heading update frequency is 20 Hz
-        - **Data Persistence**: Calibration data remains valid after device restart
+- **Using the Compass**:
+  - The pointer will automatically point to magnetic north
+  - Tilt compensation ensures accurate display even when the device is not level
+  - Real-time heading update frequency is 20 Hz
+  - **Data Persistence**: Calibration data remains valid after device restart
 
-    - **Troubleshooting**:
-        - **Calibration fails**: Ensure away from magnetic interference sources (electronic devices, metal structures, coiled power lines)
-        - **Unstable readings**: Recalibrate in an open area
-        - **Data loss**: If calibration data is lost, the system will automatically prompt for recalibration
+- **Troubleshooting**:
+  - **Calibration fails**: Ensure away from magnetic interference sources (electronic devices, metal structures, coiled power lines)
+  - **Unstable readings**: Recalibrate in an open area
+  - **Data loss**: If calibration data is lost, the system will automatically prompt for recalibration
 
 ### 2048
 
-    2048 game
+2048 game.
 
 ### Factory Guide
 
-    Displays a QR code for the current `User Guide` web link.
+Displays a QR code for the current `User Guide` web link.
 
 
 ## Project Structure
@@ -245,19 +236,6 @@ Solutions:
   3. Ensure sensor can detect air quality changes
 ```
 
-### Program Crash or Stack Overflow
-```
-Problem: Guru Meditation Error: Stack protection fault
-Causes:
-  1. Insufficient thread stack space (BSEC requires larger stack)
-  2. Too many parameters in log formatting
-  
-Solutions:
-  1. Increase boost::thread stack size to 16KB or larger
-  2. Reduce number of parameters in single log output
-  3. Avoid formatting too many floating-point numbers in logs
-```
-
 ### Gesture Detect Application Initialization Fails
 ```
 Problem: Application displays "Initialize BMI270 failed. Please insert the BMI270 sub-board."
@@ -274,11 +252,25 @@ Solutions:
   5. Ensure pull-up resistors on I2C lines
 ```
 
+### Program Crash or Stack Overflow
+```
+Problem: Guru Meditation Error: Stack protection fault
+Causes:
+  1. Insufficient thread stack space (BSEC requires larger stack)
+  2. Too many parameters in log formatting
+  
+Solutions:
+  1. Increase boost::thread stack size to 16KB or larger
+  2. Reduce number of parameters in single log output
+  3. Avoid formatting too many floating-point numbers in logs
+```
+
 ### Thread Issues
 ```
-Enable debug logs: ESP_LOGI in close() function
-Check thread stop messages in serial output
-Verify bmm_running_ flag transitions
+Suggestions:
+  1. Enable debug logs (e.g. add ESP_LOGI in close())
+  2. Check thread stop messages in serial output
+  3. Verify bmm_running_ flag transitions
 ```
 
 
@@ -293,6 +285,6 @@ This project is licensed under the Apache License 2.0. See LICENSE file for deta
 ## Technical Support
 
 - **Forum**: [esp32.com](https://esp32.com/viewforum.php?f=35)
-- **GitHub Issues**: [esp-brookesia/issues](https://github.com/espressif/esp-brookesia/issues)
+- **GitHub Issues**: [esp-dev-kits/issues](https://github.com/espressif/esp-dev-kits/issues)
 - **Documentation**: [ESP-Brookesia Documentation](https://docs.espressif.com/)
 

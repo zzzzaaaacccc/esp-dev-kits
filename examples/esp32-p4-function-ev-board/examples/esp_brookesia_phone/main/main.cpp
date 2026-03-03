@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Espressif Systems (Shanghai) CO LTD
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "nvs_flash.h"
@@ -11,12 +16,26 @@
 #include "bsp/esp-bsp.h"
 #include "bsp/display.h"
 #include "bsp_board_extra.h"
+#include "esp_lv_adapter.h"
+#include "lvgl_adapter_init.h"
+#include "esp_ldo_regulator.h"
 
 #include "esp_brookesia.hpp"
 #include "app_examples/phone/squareline/src/phone_app_squareline.hpp"
 #include "apps.h"
 
 static const char *TAG = "main";
+
+static esp_ldo_channel_handle_t sd_ldo_handle = NULL;
+
+static esp_err_t init_sd_ldo_only(void)
+{
+    esp_ldo_channel_config_t ldo_cfg = {
+        .chan_id = 4,
+        .voltage_mv = 3300,
+    };
+    return esp_ldo_acquire_channel(&ldo_cfg, &sd_ldo_handle);
+}
 
 extern "C" void app_main(void)
 {
@@ -33,24 +52,25 @@ extern "C" void app_main(void)
 #if CONFIG_EXAMPLE_ENABLE_SD_CARD
     ESP_ERROR_CHECK(bsp_sdcard_mount());
     ESP_LOGI(TAG, "SD card mount successfully");
+#else
+    ESP_ERROR_CHECK(init_sd_ldo_only());
 #endif
 
     ESP_ERROR_CHECK(bsp_extra_codec_init());
 
     bsp_display_cfg_t cfg = {
-        .lvgl_port_cfg = ESP_LVGL_PORT_INIT_CONFIG(),
-        .buffer_size = BSP_LCD_H_RES * BSP_LCD_V_RES,
-        .double_buffer = BSP_LCD_DRAW_BUFF_DOUBLE,
-        .flags = {
-            .buff_dma = false,
-            .buff_spiram = true,
-            .sw_rotate = false,
-        }
+        .hw_cfg = {
+            .hdmi_resolution = BSP_HDMI_RES_NONE,
+            .dsi_bus = {
+                .lane_bit_rate_mbps = BSP_LCD_MIPI_DSI_LANE_BITRATE_MBPS,
+            },
+        },
     };
-    bsp_display_start_with_config(&cfg);
+    lv_display_t *disp = lvgl_adapter_init(&cfg);
+    assert(disp != nullptr && "Failed to init LVGL adapter");
     bsp_display_backlight_on();
 
-    bsp_display_lock(0);
+    ESP_ERROR_CHECK(esp_lv_adapter_lock(-1));
 
     ESP_Brookesia_Phone *phone = new ESP_Brookesia_Phone();
     assert(phone != nullptr && "Failed to create phone");
@@ -93,5 +113,5 @@ extern "C" void app_main(void)
     assert((phone->installApp(app_video_player) >= 0) && "Failed to begin app_video_player");
 #endif
 
-    bsp_display_unlock();
+    esp_lv_adapter_unlock();
 }

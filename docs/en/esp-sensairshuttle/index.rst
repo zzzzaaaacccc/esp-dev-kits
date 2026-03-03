@@ -5,7 +5,7 @@ ESP-SensairShuttle
 
 **ESP-SensairShuttle** is a development board jointly launched by Espressif and **Bosch Sensortec** for **motion sensing** and **large language model human-computer interaction** scenarios, dedicated to promoting the deep integration of multimodal sensing and intelligent interaction technologies. The platform covers typical application scenarios such as **AI toys, smart homes, sports health, and smart offices**, supporting a complete technical chain from environmental sensing, behavior understanding to intelligent feedback, providing a more natural, real-time, and intelligent interaction experience for next-generation intelligent terminals.
 
-The application examples for the development board are currently under development. Please stay tuned.
+The application examples for the development board are stored in the :project:`examples <examples/esp-sensairshuttle>` folder.
 
 .. note::
 

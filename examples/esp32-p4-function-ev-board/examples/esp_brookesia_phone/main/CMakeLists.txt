@@ -1,5 +1,5 @@
 idf_component_register(
-    SRCS main.cpp
+    SRCS main.cpp lvgl_adapter_init.c
     INCLUDE_DIRS .)
 
 idf_component_get_property(LVGL_LIB lvgl__lvgl COMPONENT_LIB)

@@ -4,6 +4,12 @@ ESP32-P4-EYE
 
 :link_to_translation:`en:[English]`
 
+.. note::
+
+    若您使用的是搭载芯片版本 v3.x 的 ESP32-P4X-EYE，请参阅此 :doc:`用户指南 <../esp32-p4x-eye/user_guide>`。
+
+    要识别所使用的芯片版本，请查看 `ESP32-P4 系列芯片勘误表`_ > `芯片版本标识`_。
+
 本指南将帮助您快速上手 ESP32-P4-EYE，并提供该款开发板的详细信息。
 
 ESP32-P4-EYE 是一款基于 ESP32-P4 芯片的视觉开发板，主要面向摄像头应用。ESP32-P4 搭载双核 RISC-V 处理器，支持最大 32 MB PSRAM。此外，ESP32-P4 支持 USB 2.0 标准, MIPI-CSI/DSI, H264 Encoder 等多种外设，可满足客户对低成本、高性能、低功耗的多媒体产品的开发需求。
@@ -33,7 +39,7 @@ ESP32-P4-EYE 是一款基于 ESP32-P4 芯片的视觉开发板，主要面向摄
 - `硬件版本`_：介绍硬件历史版本和已知问题，并提供链接至历史版本开发板的入门指南（如有）。
 - `相关文档`_：列出了相关文档的链接。
 
-.. _Getting-started:
+.. _Getting-started_p4_eye_1:
 
 入门指南
 ========
@@ -176,7 +182,7 @@ ESP32-P4-EYE 是一款基于 ESP32-P4 芯片的视觉开发板，主要面向摄
 
 请前往 `快速入门 <https://docs.espressif.com/projects/esp-idf/zh_CN/latest/esp32p4/get-started/index.html>`__ 中 `详细安装步骤 <https://docs.espressif.com/projects/esp-idf/zh_CN/latest/esp32p4/get-started/index.html#get-started-how-to-get-esp-idf>`__ 一节查看如何快速设置开发环境。
 
-.. _Hardware-reference:
+.. _Hardware-reference_p4_eye_1:
 
 硬件参考
 ========
@@ -315,7 +321,7 @@ ESP32-C6-MINI-1U 模组接口
 
 该开发板为最新硬件，尚未有历史版本。
 
-.. _Related-documents:
+.. _Related-documents_p4_eye_1:
 
 相关文档
 ==========
@@ -337,3 +343,5 @@ ESP32-C6-MINI-1U 模组接口
 .. _OV2710 概述: https://dl.espressif.com/AE/esp-dev-kits/ov2710pbv1.1web.pdf
 .. _摄像头规格书: https://dl.espressif.com/AE/esp-dev-kits/HDF2710-47-MIPI-V2.0.pdf
 .. _显示屏规格书: https://dl.espressif.com/AE/esp-dev-kits/胶铁一体ZJY154KC-IF17.pdf
+.. _芯片版本标识: https://docs.espressif.com/projects/esp-chip-errata/zh_CN/latest/esp32p4/01-chip-identification/index.html#
+.. _ESP32-P4 系列芯片勘误表: https://docs.espressif.com/projects/esp-chip-errata/zh_CN/latest/esp32p4/index.html

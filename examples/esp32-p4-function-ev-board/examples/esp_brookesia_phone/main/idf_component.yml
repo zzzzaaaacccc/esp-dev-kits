@@ -1,5 +1,7 @@
 ## IDF Component Manager Manifest File
 dependencies:
+  idf:
+    version: ">=5.5.3"
   espressif/esp_wifi_remote:
     version: "0.14.*"
     
@@ -10,9 +12,9 @@ dependencies:
     version: "0.4.*"
 
   esp_video:
-    version: "0.8.*"
+    version: "2.0.*"
     public: true
 
-  espressif/esp_h264:
-    version: "==1.0.3"
+  espressif/esp_lvgl_adapter:
+    version: "0.3.*"
     public: true

@@ -34,4 +34,13 @@
    .. toctree::
       :maxdepth: 1
 
+      ESP32-S3-DevKitM-1 <../esp32-s3-devkitm-1/index>
       ESP32-S3-USB-Bridge <../esp32-s3-usb-bridge/index>
+
+.. only:: esp32p4
+
+   .. toctree::
+      :maxdepth: 1
+
+      ESP32-P4-Function-EV-Board <../esp32-p4-function-ev-board/index>
+      ESP32-P4-EYE <../esp32-p4-eye/index>

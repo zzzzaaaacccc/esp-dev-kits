@@ -13,6 +13,7 @@
 #include "esp_lvgl_simple_player/media_src_storage.h"
 #include "esp_lvgl_simple_player/esp_lvgl_simple_player.h"
 #include "VideoPlayer.hpp"
+#include "esp_lv_adapter.h"
 
 #define APP_SUPPORT_VIDEO_FILE_EXT  ".mjpeg"
 #define APP_BGM_DIR   BSP_SPIFFS_MOUNT_POINT "/music"
@@ -69,9 +70,9 @@ bool AppVideoPlayer::back(void)
 
 bool AppVideoPlayer::close(void)
 {
-    bsp_display_unlock();
+    esp_lv_adapter_unlock();
     esp_lvgl_simple_player_del();
-    bsp_display_lock(100);
+    esp_lv_adapter_lock(100);
 
     return true;
 }
@@ -223,11 +224,11 @@ void AppVideoPlayer::file_changed(lv_event_t * e)
 
         esp_lvgl_simple_player_stop();
 
-        bsp_display_unlock();
+        esp_lv_adapter_unlock();
         if (esp_lvgl_simple_player_wait_task_stop(-1) != ESP_OK) {
             ESP_LOGE(TAG, "Player task stop timeout");
         }
-        bsp_display_lock(100);
+        esp_lv_adapter_lock(100);
 
         esp_lvgl_simple_player_change_file(video_path);
         esp_lvgl_simple_player_play();

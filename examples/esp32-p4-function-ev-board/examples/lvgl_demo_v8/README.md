@@ -10,13 +10,13 @@ This example demonstrates how to port LVGL v8 and conduct performance testing us
 
 ### Prerequisites
 
-* An ESP32-P4-Function-EV-Board.
+* An ESP32-P4X-Function-EV-Board.
 * A 7-inch 1024 x 600 LCD screen powered by the [EK79007](https://dl.espressif.com/dl/schematics/display_driver_chip_EK79007AD_datasheet.pdf) IC, accompanied by a 32-pin FPC connection [adapter board](https://dl.espressif.com/dl/schematics/esp32-p4-function-ev-board-lcd-subboard-schematics.pdf) ([LCD Specifications](https://dl.espressif.com/dl/schematics/display_datasheet.pdf)).
 * A USB-C cable for power supply and programming.
 * Please refer to the following steps for the connection:
     * **Step 1**. According to the table below, connect the pins on the back of the screen adapter board to the corresponding pins on the development board.
 
-        | Screen Adapter Board | ESP32-P4-Function-EV-Board |
+        | Screen Adapter Board | ESP32-P4X-Function-EV-Board |
         | -------------------- | -------------------------- |
         | 5V (any one)         | 5V (any one)               |
         | GND (any one)        | GND (any one)              |
@@ -52,6 +52,8 @@ Run ``idf.py menuconfig`` and go to ``Board Support Package(ESP32-P4)``:
 ```
 menuconfig > Component config > Board Support Package
 ```
+
+If you are using the original ESP32-P4 chip, enable `ESP32P4_SELECTS_REV_LESS_V3` in `idf.py menuconfig`.
 
 
 ## How to Use the Example

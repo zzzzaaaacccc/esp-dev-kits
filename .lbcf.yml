@@ -18,7 +18,7 @@ syntax_version: v0.62
 # ESP32-C6: 4 documents, including ESP32-C6-DevKitC-1, ESP32-C6-DevKitM-1. All ESP32-C6 user guides in this esp-dev-kits repo are posted to CDP.
 # ESP32-C61: 2 documents, including ESP32-C61-DevKitC-1. But the documents are not posted to CDP or official website.
 # ESP32-H2: 2 documents, including ESP32-H2-DevKitM-1. All ESP32-H2 user guides in this esp-dev-kits repo are posted to CDP.
-# ESP32-P4: 4 documents, including ESP32-P4-Function-EV-Board and ESP32-P4-EYE.
+# ESP32-P4: 10 documents, including 4 boards: ESP32-P4-Function-EV-Board, ESP32-P4X-Function-EV-Board, ESP32-P4-EYE and ESP32-P4X-EYE.
 # Other boards: 8 documents, including ESP-Prog, ESP-Module-Prog-1, ESP-Module-Prog-1R, ESP-Module-Prog-SUB-02, and ESP-Module-Prog-SUB-01&04
 documents:
 ########################################
@@ -1438,7 +1438,7 @@ documents:
       document_type: guide
       document_type_old_website: guide
       version: latest
-      revision_date: 2026-01-15
+      revision_date: 2026-02-27
       language: en
       document_storage: docs
       document_link: https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32p4/esp32-p4-function-ev-board/index.html
@@ -1463,7 +1463,7 @@ documents:
       document_type: guide
       document_type_old_website: guide
       version: latest
-      revision_date: 2026-01-15
+      revision_date: 2026-02-27
       language: cn
       document_storage: docs
       document_link: https://docs.espressif.com/projects/esp-dev-kits/zh_CN/latest/esp32p4/esp32-p4-function-ev-board/index.html
@@ -1488,7 +1488,7 @@ documents:
       document_type: guide
       document_type_old_website: guide
       version: latest
-      revision_date: 2026-01-15
+      revision_date: 2026-02-27
       language: en
       document_storage: docs
       document_link: https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32p4/esp32-p4-eye/index.html
@@ -1513,7 +1513,7 @@ documents:
       document_type: guide
       document_type_old_website: guide
       version: latest
-      revision_date: 2026-01-15
+      revision_date: 2026-02-27
       language: cn
       document_storage: docs
       document_link: https://docs.espressif.com/projects/esp-dev-kits/zh_CN/latest/esp32p4/esp32-p4-eye/index.html
@@ -2206,7 +2206,7 @@ documents:
       document_type: guide
       document_type_old_website: guide
       version: latest
-      revision_date: 2025-12-26
+      revision_date: 2026-02-27
       language: en
       document_storage: docs
       document_link: https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32p4/esp32-p4-function-ev-board/user_guide_v1.4.html
@@ -2232,7 +2232,7 @@ documents:
       document_type: guide
       document_type_old_website: guide
       version: latest
-      revision_date: 2025-12-26
+      revision_date: 2026-02-27
       language: cn
       document_storage: docs
       document_link: https://docs.espressif.com/projects/esp-dev-kits/zh_CN/latest/esp32p4/esp32-p4-function-ev-board/user_guide_v1.4.html
@@ -2555,6 +2555,107 @@ documents:
       document_storage: docs
       document_link: https://docs.espressif.com/projects/esp-dev-kits/zh_CN/latest/esp32s3/esp32-s3-lcd-ev-board/user_guide.html
       document_summary: 本指南将帮助您快速上手 ESP32-S3-LCD-EV-Board v1.5，并提供该款开发板的详细信息。
+      notify_subscribers: true
+      visibility_on_website: show
+      scheduled_release_date:
+      document_status: active
+      document_classification: public
+########################################
+# 101 ESP32-P4X-Function-EV-Board User Guide
+########################################
+    - document_name: ESP32-P4X-Function-EV-Board User Guide
+      doc_id: 10177
+      translation_docid: 10179
+      chip_series: ESP32-P4
+      product_name:
+        - ESP32-P4X-Function-EV-Board
+      product_name_old_website:
+        - ESP32-P4-Function-EV-Board
+      soc_series_base_filter: all
+      document_type: guide
+      document_type_old_website: guide
+      version: latest
+      revision_date: 2026-02-27
+      language: en
+      document_storage: docs
+      document_link: https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32p4/esp32-p4x-function-ev-board/user_guide.html
+      document_summary: This user guide will help you get started with ESP32-P4X-Function-EV-Board and provide more in-depth information.
+      notify_subscribers: true
+      visibility_on_website: show
+      scheduled_release_date:
+      document_status: active
+      document_classification: public
+
+########################################
+# 102 ESP32-P4X-Function-EV-Board 用户指南
+########################################
+    - document_name: ESP32-P4X-Function-EV-Board 用户指南
+      doc_id: 10179
+      translation_docid: 10177
+      chip_series: ESP32-P4
+      product_name:
+        - ESP32-P4X-Function-EV-Board
+      product_name_old_website:
+        - ESP32-P4-Function-EV-Board
+      soc_series_base_filter: all
+      document_type: guide
+      document_type_old_website: guide
+      version: latest
+      revision_date: 2026-02-27
+      language: cn
+      document_storage: docs
+      document_link: https://docs.espressif.com/projects/esp-dev-kits/zh_CN/latest/esp32p4/esp32-p4x-function-ev-board/user_guide.html
+      document_summary: 本指南将帮助您快速上手 ESP32-P4X-Function-EV-Board，并提供该款开发板的详细信息。
+      notify_subscribers: true
+      visibility_on_website: show
+      scheduled_release_date:
+      document_status: active
+      document_classification: public
+########################################
+# 103 ESP32-P4X-EYE User Guide
+########################################
+    - document_name: ESP32-P4X-EYE User Guide
+      doc_id: 10181
+      translation_docid: 10187
+      chip_series: ESP32-P4
+      product_name:
+        - ESP32-P4X-EYE
+      product_name_old_website:
+        - ESP32-P4-EYE
+      soc_series_base_filter: all
+      document_type: guide
+      document_type_old_website: guide
+      version: latest
+      revision_date: 2026-02-27
+      language: en
+      document_storage: docs
+      document_link: https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32p4/esp32-p4x-eye/index.html
+      document_summary: This user guide will help you get started with ESP32-P4X-EYE and provide more in-depth information.
+      notify_subscribers: true
+      visibility_on_website: show
+      scheduled_release_date:
+      document_status: active
+      document_classification: public
+########################################
+# 104 ESP32-P4X-EYE 用户指南
+########################################
+    - document_name: ESP32-P4X-EYE 用户指南
+      doc_id: 10187
+      translation_docid: 10181
+      chip_series: ESP32-P4
+      product_name:
+        - ESP32-P4X-EYE
+      product_name_old_website:
+        - ESP32-P4-EYE
+      soc_series_base_filter: all
+      document_type: guide
+      document_type_old_website: guide
+      version: latest
+      revision_date: 2026-02-27
+      language: cn
+      document_storage: docs
+      document_link: https://docs.espressif.com/projects/esp-dev-kits/zh_CN/latest/esp32p4/esp32-p4x-eye/index.html
+      document_summary: 本指南将帮助您快速上手 ESP32-P4X-EYE，并提供该款开发板的详细信息。
       notify_subscribers: true
       visibility_on_website: show
       scheduled_release_date:

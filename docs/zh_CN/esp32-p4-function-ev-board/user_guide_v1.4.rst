@@ -6,6 +6,12 @@ ESP32-P4-Function-EV-Board v1.4
 
 最新版本： :doc:`user_guide`
 
+.. note::
+
+    若您使用的是搭载芯片版本 v3.x 的 ESP32-P4X-Function-EV-Board，请参阅此 :doc:`用户指南 <../esp32-p4x-function-ev-board/user_guide>`。
+
+    版本号 v1.4 指开发板的硬件版本。要识别所使用的芯片版本，请查看 `ESP32-P4 系列芯片勘误表`_ > `芯片版本标识`_。
+
 本指南将帮助您快速上手 ESP32-P4-Function-EV-Board，并提供该款开发板的详细信息。
 
 ESP32-P4-Function-EV-Board 是一款基于 ESP32-P4 芯片的多媒体开发板。ESP32-P4 搭载双核 RISC-V 处理器，支持最大 32 MB PSRAM。此外，ESP32-P4 支持 USB 2.0 标准, MIPI-CSI/DSI, H264 Encoder 等多种外设，可满足客户对低成本、高性能、低功耗的多媒体产品的开发需求。
@@ -63,7 +69,7 @@ ESP32-P4-Function-EV-Board 是一款基于 ESP32-P4 芯片的多媒体开发板�
    * - 主要组件
      - 介绍
    * - J1
-     - 所有可用 GPIO 管脚均已引出至排针 J1，详细信息请见 :ref:`header-block`。
+     - 所有可用 GPIO 管脚均已引出至排针 J1，详细信息请见 :ref:`header-block-v1.4`。
    * - ESP32-C6 Module Programming Connector（ESP32-C6 模组固件烧录接口）
      - 该接口可配合使用 ESP-Prog 或其他 UART 工具为 ESP32-C6 模组烧录固件。
    * - ESP32-C6-MINI-1 Module（ESP32-C6-MINI-1 模组）
@@ -364,3 +370,5 @@ J1
 .. _显示屏适配板 PCB 布局图: https://dl.espressif.com/dl/schematics/esp32-p4-function-ev-board-lcd-subboard-pcb-layout.pdf
 .. _摄像头适配板原理图: https://dl.espressif.com/dl/schematics/esp32-p4-function-ev-board-camera-subboard-schematics.pdf
 .. _摄像头适配板 PCB 布局图: https://dl.espressif.com/dl/schematics/esp32-p4-function-ev-board-camera-subboard-pcb-layout.pdf
+.. _芯片版本标识: https://docs.espressif.com/projects/esp-chip-errata/zh_CN/latest/esp32p4/01-chip-identification/index.html#
+.. _ESP32-P4 系列芯片勘误表: https://docs.espressif.com/projects/esp-chip-errata/zh_CN/latest/esp32p4/index.html

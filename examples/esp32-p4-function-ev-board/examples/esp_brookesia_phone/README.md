@@ -9,14 +9,14 @@ This example, based on [ESP_Brookesia](https://github.com/espressif/esp-brookesi
 
 ### Prerequisites
 
-* An ESP32-P4-Function-EV-Board.
+* An ESP32-P4X-Function-EV-Board.
 * A 7-inch 1024 x 600 LCD screen powered by the [EK79007](https://docs.espressif.com/projects/esp-dev-kits/en/latest/_static/esp32-p4-function-ev-board/camera_display_datasheet/display_driver_chip_EK79007AD_datasheet.pdf) IC, accompanied by a 32-pin FPC connection [adapter board](https://docs.espressif.com/projects/esp-dev-kits/en/latest/_static/esp32-p4-function-ev-board/schematics/esp32-p4-function-ev-board-lcd-subboard-schematics.pdf) ([LCD Specifications](https://docs.espressif.com/projects/esp-dev-kits/en/latest/_static/esp32-p4-function-ev-board/camera_display_datasheet/display_datasheet.pdf)).
 * A MIPI-CSI camera powered by the SC2336 IC, accompanied by a 32-pin FPC connection [adapter board](https://docs.espressif.com/projects/esp-dev-kits/en/latest/_static/esp32-p4-function-ev-board/schematics/esp32-p4-function-ev-board-camera-subboard-schematics.pdf) ([Camera Specifications](https://docs.espressif.com/projects/esp-dev-kits/en/latest/_static/esp32-p4-function-ev-board/camera_display_datasheet/camera_datasheet.pdf)).
 * A USB-C cable for power supply and programming.
 * Please refer to the following steps for the connection:
     * **Step 1**. According to the table below, connect the pins on the back of the screen adapter board to the corresponding pins on the development board.
 
-        | Screen Adapter Board | ESP32-P4-Function-EV-Board |
+        | Screen Adapter Board | ESP32-P4X-Function-EV-Board |
         | -------------------- | -------------------------- |
         | 5V (any one)         | 5V (any one)               |
         | GND (any one)        | GND (any one)              |
@@ -52,6 +52,8 @@ Run ``idf.py menuconfig`` and go to ``Board Support Package(ESP32-P4)``:
 ```
 menuconfig > Component config > Board Support Package
 ```
+
+If you are using the original ESP32-P4 chip, enable `ESP32P4_SELECTS_REV_LESS_V3` in `idf.py menuconfig`.
 
 To use the SD card and enable the "Video Player" APP, run ``idf.py menuconfig`` and then select ``Example Configurations`` > ``Enable SD Card``
 

@@ -4,6 +4,12 @@ ESP32-P4-EYE
 
 :link_to_translation:`zh_CN:[中文]`
 
+.. note::
+
+    If you are using ESP32-P4X-EYE with chip revision v3.x, please refer to this :doc:`user guide <../esp32-p4x-eye/user_guide>`.
+
+    To identify the embedded chip revision, refer to `ESP32-P4 Series SoC Errata`_ > `Chip Revision Identification`_.
+
 This user guide will help you get started with ESP32-P4-EYE and will also provide more in-depth information.
 
 ESP32-P4-EYE is a vision development board based on the ESP32-P4 chip, mainly targeting camera applications. ESP32-P4 features a dual-core RISC-V processor and supports up to 32 MB of PSRAM. In addition, ESP32-P4 supports USB 2.0 standard, MIPI-CSI/DSI, H264 Encoder, and various other peripherals. With all of its outstanding features, the board is an ideal choice for developing low-cost, high-performance, low-power network-connected audio and video products.
@@ -33,7 +39,7 @@ This guide includes the following sections:
 - `Hardware Revision Details`_: Revision history, known issues, and links to user guides for previous versions (if any) of ESP32-P4-EYE.
 - `Related Documents`_: Links to related documentation.
 
-.. _Getting-started:
+.. _Getting-started_p4_eye_0:
 
 Getting Started
 ===============
@@ -176,7 +182,7 @@ Software Setup
 
 To set up your development environment and flash an application example onto your board, please follow the `installation instructions <https://docs.espressif.com/projects/esp-idf/en/latest/esp32p4/get-started/index.html#installation>`__ in `ESP-IDF Get Started <https://docs.espressif.com/projects/esp-idf/en/latest/esp32p4/get-started/index.html>`__.
 
-.. _Hardware-reference:
+.. _Hardware-reference_p4_eye_0:
 
 Hardware Reference
 ==================
@@ -315,7 +321,7 @@ Hardware Revision Details
 
 No previous versions available.
 
-.. _Related-documents:
+.. _Related-documents_p4_eye_0:
 
 Related Documents
 =================
@@ -337,3 +343,5 @@ Related Documents
 .. _OV2710 Overview: https://dl.espressif.com/AE/esp-dev-kits/ov2710pbv1.1web.pdf
 .. _Camera Datasheet: https://dl.espressif.com/AE/esp-dev-kits/HDF2710-47-MIPI-V2.0.pdf
 .. _Display Datasheet: https://dl.espressif.com/AE/esp-dev-kits/胶铁一体ZJY154KC-IF17.pdf
+.. _Chip Revision Identification: https://docs.espressif.com/projects/esp-chip-errata/en/latest/esp32p4/01-chip-identification/index.html#
+.. _ESP32-P4 Series SoC Errata: https://docs.espressif.com/projects/esp-chip-errata/en/latest/esp32p4/index.html

@@ -2,13 +2,13 @@
 
 [英文版本](./README.md)
 
-该示例基于 ESP32-P4-EYE 开发板，展示了一个功能全面的迷你相机应用，支持拍照、定时拍照、录像、相册预览、USB 挂载 SD 卡以及图像参数设置（可调节分辨率、饱和度、对比度、亮度和色度）。在此基础上，应用还集成了人脸检测、行人检测以及基于 YOLOv11 nano 模型的目标检测功能，增强了智能视觉识别能力。项目综合利用了开发板的多种外设资源，包括 MIPI-CSI 摄像头接口、SPI 接口 LCD 显示屏、USB High-Speed 接口、按键输入、旋转编码器和 SD 卡存储等。
+该示例基于 ESP32-P4X-EYE 开发板，展示了一个功能全面的迷你相机应用，支持拍照、定时拍照、录像、相册预览、USB 挂载 SD 卡以及图像参数设置（可调节分辨率、饱和度、对比度、亮度和色度）。在此基础上，应用还集成了人脸检测、行人检测以及基于 YOLOv11 nano 模型的目标检测功能，增强了智能视觉识别能力。项目综合利用了开发板的多种外设资源，包括 MIPI-CSI 摄像头接口、SPI 接口 LCD 显示屏、USB High-Speed 接口、按键输入、旋转编码器和 SD 卡存储等。
 
 ## 快速入门
 
 ### 准备工作
 
-* 一块 ESP32-P4-EYE 开发板。
+* 一块 ESP32-P4X-EYE 开发板。
 * 用于供电和编程的 USB-C 电缆。
 * 用于存储照片、录像的 SD 卡（可选）
 
@@ -36,24 +36,26 @@ git clone --recursive https://github.com/espressif/esp-dev-kits.git
 menuconfig > Component config > Board Support Package
 ```
 
+若使用旧芯片 ESP32-P4，请在 ``idf.py menuconfig`` 中使能 `ESP32P4_SELECTS_REV_LESS_V3`。
+
 ## 如何使用示例
 
 ### 应用补丁
 
-* 当像素时钟设置为 80MHz 时，SPI 默认时钟源暂时可能无法满足时序需求。为此，请按照以下步骤应用补丁文件 `0004-fix-spi-default-clock-source.patch`：
+* 补丁文件 `0001-feat-sdmmc-Accelerate-SD-card-read-write-speed.patch` 用于优化 SD 卡读写性能，基于 IDF release/v5.5 commit: 82e525ef3e8e6528c95b67dd634c9cc2f5d0c3b7。请按以下步骤应用：
 
-1. 切换到 ESP-IDF 根目录并检出特定版本 (补丁针对 IDF release/v5.5 commit:98cd765953dfe0e7bb1c5df8367e1b54bd966cce 版本):
+1. 切换到 ESP-IDF 根目录并检出特定版本：
 
 ```bash
 cd ~/esp-idf
 git checkout release/v5.5
-git checkout 98cd765953dfe0e7bb1c5df8367e1b54bd966cce
+git checkout 82e525ef3e8e6528c95b67dd634c9cc2f5d0c3b7
 ```
 
 2. 将补丁文件复制到 ESP-IDF 根目录，例如：
 
 ```bash
-cp 0004-fix-spi-default-clock-source.patch ~/esp-idf/
+cp 0001-feat-sdmmc-Accelerate-SD-card-read-write-speed.patch ~/esp-idf/
 ```
 
 3. 切换到 ESP-IDF 根目录：
@@ -62,13 +64,11 @@ cp 0004-fix-spi-default-clock-source.patch ~/esp-idf/
 cd ~/esp-idf
 ```
 
-4. 执行以下命令应用补丁
+4. 执行以下命令应用补丁：
 
 ```bash
-git apply 0004-fix-spi-default-clock-source.patch
+git apply 0001-feat-sdmmc-Accelerate-SD-card-read-write-speed.patch
 ```
-
-* 若在拍照或录像过程中出现明显卡顿，可尝试应用补丁文件 `0004-fix-sdmmc-aligned-write-buffer.patch`，其使用方法同上。
 
 ### 编译和烧录示例
 

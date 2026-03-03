@@ -21,6 +21,7 @@
 #include "driver/ppa.h"
 
 #include "bsp/esp-bsp.h"
+#include "esp_lv_adapter.h"
 
 #include "esp_lcd_touch_gt911.h"
 
@@ -30,6 +31,7 @@
 #include "app_camera_pipeline.hpp"
 #include "Camera.hpp"
 #include "ui/ui.h"
+#include "esp_lv_adapter.h"
 
 #define ALIGN_UP_BY(num, align) (((num) + ((align) - 1)) & ~((align) - 1))
 
@@ -66,8 +68,8 @@ static size_t data_cache_line_size = 0;
 static ppa_client_handle_t ppa_client_srm_handle = NULL;
 static EventGroupHandle_t camera_event_group;
 
-static void camera_video_frame_operation(uint8_t *camera_buf, uint8_t camera_buf_index, 
-                                       uint32_t camera_buf_hes, uint32_t camera_buf_ves, 
+static void camera_video_frame_operation(uint8_t *camera_buf, uint8_t camera_buf_index,
+                                       uint32_t camera_buf_hes, uint32_t camera_buf_ves,
                                        size_t camera_buf_len);
 
 static bool ppa_trans_done_cb(ppa_client_handle_t ppa_client, ppa_event_data_t *event_data, void *user_data);
@@ -106,7 +108,7 @@ bool Camera::run(void)
 
     ped_detect = get_pedestrian_detect();
     assert(ped_detect != NULL);
-    
+
     hum_detect = get_humanface_detect();
     assert(hum_detect != NULL);
 
@@ -205,7 +207,7 @@ bool Camera::run(void)
 bool Camera::pause(void)
 {
     xEventGroupClearBits(camera_event_group, CAMERA_EVENT_TASK_RUN);
-    
+
     return true;
 }
 
@@ -229,7 +231,7 @@ bool Camera::close(void)
     xEventGroupSetBits(camera_event_group, CAMERA_EVENT_DELETE);
     xEventGroupClearBits(camera_event_group, CAMERA_EVENT_PED_DETECT);
     xEventGroupClearBits(camera_event_group, CAMERA_EVENT_HUMAN_DETECT);
-    
+
     app_video_stream_task_stop(_camera_ctlr_handle);
     app_video_stream_wait_stop();
 
@@ -328,7 +330,6 @@ void Camera::taskCameraInit(Camera *app)
 {
     ESP_ERROR_CHECK(app_video_set_bufs(app->_camera_ctlr_handle, EXAMPLE_CAM_BUF_NUM, (const void **)app->_cam_buffer));
 
-    ESP_LOGI(TAG, "Start camera stream task");
     ESP_ERROR_CHECK(app_video_stream_task_start(app->_camera_ctlr_handle, 0));
 
     xSemaphoreGive(app->_camera_init_sem);
@@ -405,7 +406,7 @@ void Camera::camera_dectect_task(Camera *app)
     int res = 0;
     while (1) {
         xEventGroupWaitBits(camera_event_group, CAMERA_EVENT_TASK_RUN, pdFALSE, pdTRUE, portMAX_DELAY);
-        
+
         if (xEventGroupGetBits(camera_event_group) & (CAMERA_EVENT_PED_DETECT | CAMERA_EVENT_HUMAN_DETECT)) {
             camera_pipeline_buffer_element *p = camera_pipeline_recv_element(feed_pipeline, portMAX_DELAY);
             if (p) {
@@ -439,8 +440,8 @@ void Camera::camera_dectect_task(Camera *app)
     }
 }
 
-static void camera_video_frame_operation(uint8_t *camera_buf, uint8_t camera_buf_index, 
-                                       uint32_t camera_buf_hes, uint32_t camera_buf_ves, 
+static void camera_video_frame_operation(uint8_t *camera_buf, uint8_t camera_buf_index,
+                                       uint32_t camera_buf_hes, uint32_t camera_buf_ves,
                                        size_t camera_buf_len)
 {
     // Wait for task run event
@@ -449,7 +450,7 @@ static void camera_video_frame_operation(uint8_t *camera_buf, uint8_t camera_buf
     // Check if AI detection is needed
     EventBits_t current_bits = xEventGroupGetBits(camera_event_group);
     bool is_detect_mode = current_bits & (CAMERA_EVENT_PED_DETECT | CAMERA_EVENT_HUMAN_DETECT);
-    
+
     if (is_detect_mode) {
         // Process input frame
         camera_pipeline_buffer_element *input_element = camera_pipeline_get_queued_element(feed_pipeline);
@@ -464,7 +465,7 @@ static void camera_video_frame_operation(uint8_t *camera_buf, uint8_t camera_buf
             // Process detection results
             detect_keypoints.clear();
             detect_bound.clear();
-            
+
             for (const auto& res : *(detect_element->detect_results)) {
                 const auto& box = res.box;
                 // Check if bounding box is valid
@@ -472,8 +473,8 @@ static void camera_video_frame_operation(uint8_t *camera_buf, uint8_t camera_buf
                     detect_bound.push_back(box);
 
                     // Process keypoints only in face detection mode
-                    if ((current_bits & CAMERA_EVENT_HUMAN_DETECT) && 
-                        res.keypoint.size() >= 10 && 
+                    if ((current_bits & CAMERA_EVENT_HUMAN_DETECT) &&
+                        res.keypoint.size() >= 10 &&
                         std::any_of(res.keypoint.begin(), res.keypoint.end(), [](int v) { return v != 0; })) {
                         detect_keypoints.push_back(res.keypoint);
                     }
@@ -495,8 +496,8 @@ static void camera_video_frame_operation(uint8_t *camera_buf, uint8_t camera_buf
                                  0, 0, 255, 0, 0, 3);
 
                 // Draw keypoints in face detection mode
-                if ((current_bits & CAMERA_EVENT_HUMAN_DETECT) && 
-                    i < detect_keypoints.size() && 
+                if ((current_bits & CAMERA_EVENT_HUMAN_DETECT) &&
+                    i < detect_keypoints.size() &&
                     detect_keypoints[i].size() >= 10) {
                     draw_green_points(rgb_buf, detect_keypoints[i]);
                 }
@@ -505,14 +506,14 @@ static void camera_video_frame_operation(uint8_t *camera_buf, uint8_t camera_buf
     }
 
     // Update display if not in delete state
-    if (!(current_bits & CAMERA_EVENT_DELETE) && bsp_display_lock(100)) {
+    if (!(current_bits & CAMERA_EVENT_DELETE) && (esp_lv_adapter_lock(100) == ESP_OK)) {
         if (ui_ImageCameraShotImage) {
-            lv_canvas_set_buffer(ui_ImageCameraShotImage, camera_buf, 
-                               camera_buf_hes, camera_buf_ves, 
+            lv_canvas_set_buffer(ui_ImageCameraShotImage, camera_buf,
+                               camera_buf_hes, camera_buf_ves,
                                LV_IMG_CF_TRUE_COLOR);
         }
         lv_refr_now(NULL);
-        bsp_display_unlock();
+        esp_lv_adapter_unlock();
     }
 
 #if FPS_PRINT

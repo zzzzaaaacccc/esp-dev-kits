@@ -66,9 +66,12 @@ ESP32H2_DOCS = ['*.rst',
                 'esp32-h2-devkitm-1/*.rst'
                 ]
 ESP32P4_DOCS = ['*.rst',
+                'eol/*.rst',
                 'index/esp32p4-index.inc',
                 'esp32-p4-function-ev-board/*.rst',
-                'esp32-p4-eye/*.rst'
+                'esp32-p4-eye/*.rst',
+                'esp32-p4x-function-ev-board/*.rst',
+                'esp32-p4x-eye/*.rst'
                 ]
 ESP32C5_DOCS = ['*.rst',
                 'index/esp32c5-index.inc',

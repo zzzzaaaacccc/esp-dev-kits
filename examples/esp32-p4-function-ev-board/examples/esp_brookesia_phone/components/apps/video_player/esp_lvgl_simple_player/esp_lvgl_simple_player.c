@@ -17,6 +17,7 @@
 #include "bsp/esp-bsp.h"
 #include "bsp_board_extra.h"
 #include "esp_lvgl_simple_player.h"
+#include "esp_lv_adapter.h"
 
 #define CACHE_BUF_ALIGN         (1024)
 
@@ -97,11 +98,11 @@ static void stop_event_cb(lv_event_t *e)
     if (code == LV_EVENT_CLICKED) {
         esp_lvgl_simple_player_stop();
 
-        bsp_display_unlock();
+        esp_lv_adapter_unlock();
         if (esp_lvgl_simple_player_wait_task_stop(100) != ESP_OK) {
             ESP_LOGE(TAG, "Player task stop timeout");
         }
-        bsp_display_lock(100);
+        esp_lv_adapter_lock(100);
     }
 }
 
@@ -131,7 +132,7 @@ static void repeat_event_cb(lv_event_t *e)
 
 static lv_obj_t * create_lvgl_objects(lv_obj_t * screen)
 {
-    bsp_display_lock(0);
+    esp_lv_adapter_lock(-1);
 
     /* Rows */
     lv_obj_t *cont_col = lv_obj_create(screen);
@@ -227,7 +228,7 @@ static lv_obj_t * create_lvgl_objects(lv_obj_t * screen)
         lv_obj_add_flag(img_stop, LV_OBJ_FLAG_HIDDEN);
     }
 
-    bsp_display_unlock();
+    esp_lv_adapter_unlock();
 
     return cont_col;
 }
@@ -402,7 +403,7 @@ static void show_video_task(void *arg)
     player_ctx.out_buff = video_decoder_malloc(player_ctx.out_buff_size, false, &player_ctx.out_buff_size);
     ESP_GOTO_ON_FALSE(player_ctx.out_buff, ESP_ERR_NO_MEM, err, TAG, "Allocation out_buff failed");
 
-    bsp_display_lock(0);
+    esp_lv_adapter_lock(-1);
 	/* Set buffer to LVGL canvas */
     lv_canvas_set_buffer(player_ctx.canvas, player_ctx.out_buff, width, height, LV_IMG_CF_TRUE_COLOR);
     lv_obj_invalidate(player_ctx.canvas);
@@ -423,7 +424,7 @@ static void show_video_task(void *arg)
     lv_obj_add_flag(player_ctx.img_stop, LV_OBJ_FLAG_HIDDEN);
     /* Set slider range */
     lv_slider_set_range(player_ctx.slider, 0, 1000);
-    bsp_display_unlock();
+    esp_lv_adapter_unlock();
 
     player_ctx.state = PLAYER_STATE_PLAYING;
 
@@ -436,9 +437,9 @@ static void show_video_task(void *arg)
 
     while (player_ctx.state != PLAYER_STATE_STOPPED) {
         if (player_ctx.state == PLAYER_STATE_PAUSED) {
-            if (bsp_display_lock(10)) {
+            if (esp_lv_adapter_lock(10) == ESP_OK) {
                 lv_obj_clear_flag(player_ctx.img_pause, LV_OBJ_FLAG_HIDDEN);
-                bsp_display_unlock();
+                esp_lv_adapter_unlock();
             }
             vTaskDelay(pdMS_TO_TICKS(500));
             continue;
@@ -472,17 +473,17 @@ static void show_video_task(void *arg)
             all_size += processed;
         }
 
-        if (bsp_display_lock(10)) {
+        if (esp_lv_adapter_lock(10) == ESP_OK) {
             /* Refresh video canvas object */
             lv_obj_invalidate(player_ctx.canvas);
             /* Set slider */
             lv_slider_set_value(player_ctx.slider, ((float)all_size/(float)player_ctx.filesize)*1000, LV_ANIM_ON);
-            bsp_display_unlock();
+            esp_lv_adapter_unlock();
         }
     }
 
 err:
-    bsp_display_lock(0);
+    esp_lv_adapter_lock(-1);
     /* Show black on screen */
     memset(player_ctx.out_buff, 0, player_ctx.out_buff_size);
     if (player_ctx.auto_height) {
@@ -491,7 +492,7 @@ err:
     lv_obj_invalidate(player_ctx.canvas);
     /* Set slider */
     lv_slider_set_value(player_ctx.slider, 0, LV_ANIM_ON);
-    bsp_display_unlock();
+    esp_lv_adapter_unlock();
 
     if (player_ctx.bgm_path != NULL) {
         bsp_extra_player_register_callback(NULL, NULL);
@@ -628,12 +629,12 @@ void esp_lvgl_simple_player_pause(void)
             }
         }
 
-        bsp_display_lock(0);
+        esp_lv_adapter_lock(-1);
         lv_obj_clear_state(player_ctx.btn_play, LV_STATE_DISABLED);
         lv_obj_clear_state(player_ctx.btn_stop, LV_STATE_DISABLED);
         lv_obj_clear_state(player_ctx.btn_pause, LV_STATE_DISABLED);
         lv_obj_clear_state(player_ctx.btn_repeat, LV_STATE_DISABLED);
-        bsp_display_unlock();
+        esp_lv_adapter_unlock();
     }
 }
 
@@ -658,10 +659,10 @@ void esp_lvgl_simple_player_resume(void)
             }
         }
 
-        bsp_display_lock(0);
+        esp_lv_adapter_lock(-1);
         lv_obj_add_flag(player_ctx.img_pause, LV_OBJ_FLAG_HIDDEN);
         lv_obj_add_state(player_ctx.btn_play, LV_STATE_DISABLED);
-        bsp_display_unlock();
+        esp_lv_adapter_unlock();
     }
 }
 
@@ -675,13 +676,13 @@ void esp_lvgl_simple_player_stop(void)
     ESP_LOGI(TAG, "Player stopped.");
     player_ctx.state = PLAYER_STATE_STOPPED;
 
-    bsp_display_lock(0);
+    esp_lv_adapter_lock(-1);
     lv_obj_clear_state(player_ctx.btn_play, LV_STATE_DISABLED);
     lv_obj_add_state(player_ctx.btn_stop, LV_STATE_DISABLED);
     lv_obj_add_state(player_ctx.btn_pause, LV_STATE_DISABLED);
     lv_obj_add_state(player_ctx.btn_repeat, LV_STATE_DISABLED);
     lv_obj_clear_flag(player_ctx.img_stop, LV_OBJ_FLAG_HIDDEN);
-    bsp_display_unlock();
+    esp_lv_adapter_unlock();
 }
 
 void esp_lvgl_simple_player_repeat(bool repeat)
